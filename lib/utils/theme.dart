@@ -38,7 +38,7 @@ class AppThemeData {
     visualDensity: VisualDensity.adaptivePlatformDensity,
   ).copyWith(
     pageTransitionsTheme: PageTransitionsTheme(builders: <TargetPlatform, PageTransitionsBuilder>{
-      TargetPlatform.android: ZoomPageTransitionsBuilder(),
+      TargetPlatform.android: OpenUpwardsPageTransitionsBuilder(),
       TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
       TargetPlatform.linux: ZoomPageTransitionsBuilder(),
       TargetPlatform.macOS: ZoomPageTransitionsBuilder(),
@@ -75,10 +75,12 @@ class AppThemeData {
     visualDensity: VisualDensity.adaptivePlatformDensity,
   ).copyWith(
     pageTransitionsTheme: PageTransitionsTheme(builders: <TargetPlatform, PageTransitionsBuilder>{
-      TargetPlatform.android: ZoomPageTransitionsBuilder(),
+      TargetPlatform.android: OpenUpwardsPageTransitionsBuilder(),
       TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
       TargetPlatform.linux: ZoomPageTransitionsBuilder(),
       TargetPlatform.macOS: ZoomPageTransitionsBuilder(),
     }),
   );
+
+
 }

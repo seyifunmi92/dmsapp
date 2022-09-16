@@ -13,9 +13,9 @@ const appWhite = Color(0xFFFFFFFF);
 const appLight_purple = Color(0xFFdee1ff);
 const appLight_yellow = Color(0xffff8b00);
 const appLight_orange = Color(0xFFffddd5);
-const appLight_bitter_lemon = Color(0xFF73AB22);
+const appLight_bitter_lemon = Color(0xFF27AE60);
 const appLight_facebook_blue = Color(0xFF0778E8);
-const appLight_google_red = Color(0xFFEA4335);
+const appLight_google_red = Color(0xFFDC3027);
 const appLight_parrot_green = Color(0xFFb4ef93);
 const appIconTintCherry = Color(0xFFffddd5);
 const appIconTint_sky_blue = Color(0xFF73d8d4);
@@ -47,3 +47,15 @@ const appColorPrimaryDarkLight = Color(0xFFF9FAFF);
 const iconColorPrimaryDark = Color(0xFF212121);
 const iconColorSecondaryDark = Color(0xFFA8ABAD);
 const appShadowColorDark = Color(0x1A3E3942);
+
+TextStyle kmediumText(Color colors) => TextStyle(
+    color: colors,
+    fontSize: 15.0,
+    fontFamily: 'Poppins',
+    fontWeight: FontWeight.w400);
+
+Color changeColorHue(Color color) => HSLColor.fromColor(color).withHue(360).toColor();
+
+Color changeColorSaturation(Color color) => HSLColor.fromColor(color).withSaturation(1).toColor();
+
+Color changeColorLightness(Color color) => HSLColor.fromColor(color).withLightness(1).toColor();
