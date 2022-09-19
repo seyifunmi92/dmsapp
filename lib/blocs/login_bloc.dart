@@ -7,8 +7,6 @@ import 'package:platform_device_id/platform_device_id.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LogInBloc extends ChangeNotifier {
-
-  
   LogInBloc() {
     checkSignIn();
     getLoggedInToken();
@@ -16,13 +14,17 @@ class LogInBloc extends ChangeNotifier {
     getIPAddress();
   }
 
-
   bool _isSignedIn = false;
   bool get isSignedIn => _isSignedIn;
 
   bool _isOnboardingRead = false;
   bool get isOnboardingRead => _isOnboardingRead;
 
+  String? _userData;
+  String? get userData => _userData;
+
+  String? _userData2;
+  String? get userData2 => _userData;
 
   String? _token;
   String? get token => _token;
@@ -42,31 +44,44 @@ class LogInBloc extends ChangeNotifier {
   String _ipAddress = "";
   String get ipAddress => _ipAddress;
 
-
   Future saveLoggedInToken(String userToken) async {
     final SharedPreferences sp = await SharedPreferences.getInstance();
-    await sp.setString('token', userToken );
+    await sp.setString('token', userToken);
     _token = userToken;
+    notifyListeners();
+  }
+
+  Future getuserData(String firstName) async {
+    final SharedPreferences sp = await SharedPreferences.getInstance();
+    await sp.setString('firstname', firstName);
+    _userData = firstName;
+    notifyListeners();
+  }
+
+  Future getuserData2(String lastName) async {
+    final SharedPreferences sp = await SharedPreferences.getInstance();
+    await sp.setString('lastname', lastName);
+    _userData2 = lastName;
     notifyListeners();
   }
 
   Future saveRegistrationID(String regID) async {
     final SharedPreferences sp = await SharedPreferences.getInstance();
-    await sp.setString('registrationID', regID );
+    await sp.setString('registrationID', regID);
     _registrationID = regID;
     notifyListeners();
   }
 
   Future saveResetToken(String token) async {
     final SharedPreferences sp = await SharedPreferences.getInstance();
-    await sp.setString('resetToken', token );
+    await sp.setString('resetToken', token);
     _resetToken = token;
     notifyListeners();
   }
 
   Future saveOtpId(String otpID) async {
     final SharedPreferences sp = await SharedPreferences.getInstance();
-    await sp.setString('otpid', otpID );
+    await sp.setString('otpid', otpID);
     _otpID = otpID;
     notifyListeners();
   }
@@ -79,6 +94,15 @@ class LogInBloc extends ChangeNotifier {
     } on PlatformException catch (e) {
       print(e.message);
     }
+  }
+
+  getSharedData() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    String? firstname = sharedPreferences.getString("firstname");
+    String? lastname = sharedPreferences.getString("lastname");
+    var userName = firstname! + " " + lastname!;
+    print(userName);
+    return userName;
   }
 
   Future getIPAddress() async {
@@ -97,7 +121,6 @@ class LogInBloc extends ChangeNotifier {
     }
   }
 
-
   Future getLoggedInToken() async {
     final SharedPreferences sp = await SharedPreferences.getInstance();
     _token = sp.getString('token');
@@ -110,17 +133,12 @@ class LogInBloc extends ChangeNotifier {
     notifyListeners();
   }
 
-
-
-
   Future setSignIn() async {
     final SharedPreferences sp = await SharedPreferences.getInstance();
     sp.setBool('signed_in', true);
     _isSignedIn = true;
     notifyListeners();
   }
-
-
 
   void checkSignIn() async {
     final SharedPreferences sp = await SharedPreferences.getInstance();
@@ -141,15 +159,11 @@ class LogInBloc extends ChangeNotifier {
     notifyListeners();
   }
 
-
-
   Future userSignout() async {
-    await clearAllLoggedData()
-    .then((value){
+    await clearAllLoggedData().then((value) {
       _isSignedIn = false;
       _token = null;
       notifyListeners();
-      
     });
   }
 
@@ -158,6 +172,4 @@ class LogInBloc extends ChangeNotifier {
     sp.remove("signed_in");
     sp.remove("token");
   }
-
-
 }

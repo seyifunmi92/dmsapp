@@ -9,11 +9,13 @@ import 'package:dms/utils/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:loading_indicator/loading_indicator.dart';
 import 'package:nb_utils/nb_utils.dart';
 import 'package:provider/provider.dart';
 
 import '../../blocs/cart_bloc.dart';
 import '../../layout/account_picker.dart';
+import '../../layout/loading_indicator_widget.dart';
 import '../../network/network_utils.dart';
 
 class ProductDetails extends StatefulWidget {
@@ -40,11 +42,11 @@ class _ProductDetailsState extends State<ProductDetails> {
 
   int distributorSapAccountId = 0;
   int quantity = 1;
-  bool isLoading = true;
+  bool isLoading = false;
 
   void _decreaseQuantity() {
     setState(() {
-      currentIndex--;
+      quantity--;
     });
   }
 
@@ -88,6 +90,7 @@ class _ProductDetailsState extends State<ProductDetails> {
         ),
       ),
       child: Column(children: [
+        // isLoading ? LoadingIndicatorWidget() : Container(),
         SizedBox(
           height: _height * 0.045,
         ),
@@ -104,17 +107,19 @@ class _ProductDetailsState extends State<ProductDetails> {
                   color: Color(0xff141515),
                   letterSpacing: 0.04,
                 ),
+                overflow: TextOverflow.ellipsis,
               ),
-              Text(
-                "N${formatter.format(widget.amount)}.00",
-                style: GoogleFonts.openSans(
-                  fontSize: _height * .024,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xff27AE60),
-                  letterSpacing: 0.04,
-                ),
-              ),
+
             ],
+          ),
+        ),
+        Text(
+          "N${formatter.format(widget.amount)}.00",
+          style: GoogleFonts.openSans(
+            fontSize: _height * .024,
+            fontWeight: FontWeight.w700,
+            color: Color(0xff27AE60),
+            letterSpacing: 0.04,
           ),
         ),
         SizedBox(
@@ -254,7 +259,7 @@ class _ProductDetailsState extends State<ProductDetails> {
           ),
         ),
         SizedBox(
-          height: _height * .05,
+          height: _height * .04,
         ),
         GestureDetector(
           onTap: () {
@@ -299,7 +304,7 @@ class _ProductDetailsState extends State<ProductDetails> {
           ),
         ),
         SizedBox(
-          height: _height * .05,
+          height: _height * .04,
         ),
         Padding(
           padding: EdgeInsets.symmetric(horizontal: _width * .08),
@@ -339,13 +344,16 @@ class _ProductDetailsState extends State<ProductDetails> {
     final CartBloc cb = context.read<CartBloc>();
     distributorSapAccountId = cb.distributorSapAccountId;
     if(distributorSapAccountId == 0){
-      return toast("Select Country & Company to proceed");
+      return toast("Select account to proceed");
     }
-    isLoading = true;
+    setState(() {
+      isLoading = true;
+    });
     Map req = {"productId": widget.productId, "distributorSapAccountId": distributorSapAccountId, "channelCode": "Mobile", "quantity": quantity, "unitOfMeasureCode": "kg"};
 
-    await postRequest('https://dms-order-ms.azurewebsites.net/api/cart/cartitem', req).then((value) {
-      print(value);
+    await postRequestWithToken('https://dms-order-ms.azurewebsites.net/api/cart/cartitem', req).then((value) {
+      // print(value);
+      // toast("Product added to the cart", length: Toast.LENGTH_LONG);
       if (value.statusCode.isSuccessful()) {
         var data = jsonDecode(value.body);
         print(data);
@@ -357,7 +365,7 @@ class _ProductDetailsState extends State<ProductDetails> {
         if (value.body.isJson()) {
           var data = jsonDecode(value.body);
           print("Omo Error $data");
-          toast(data['message'], length: Toast.LENGTH_LONG);
+          toast(data['statusCode'], length: Toast.LENGTH_LONG);
           setState(() {
             isLoading = false;
           });

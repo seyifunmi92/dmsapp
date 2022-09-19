@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:dms/constant.dart';
 import 'package:dms/layout/appWidget.dart';
+import 'package:dms/model/ordermodels.dart';
 import 'package:dms/screens/accounts/accountdelete.dart';
 import 'package:dms/screens/auth/confirm_otp.dart';
 import 'package:dms/screens/auth/login_screen.dart';
@@ -9,35 +12,56 @@ import 'package:dms/screens/auth/password_reset/password_reset_request.dart';
 import 'package:dms/screens/auth/register_screen_contd.dart';
 import 'package:dms/screens/carts/checkout.dart';
 import 'package:dms/screens/carts/ordersummary.dart';
+import 'package:dms/screens/carts/verifyyotp.dart';
 import 'package:dms/screens/dashboard/dashboard.dart';
 import 'package:dms/screens/faq/faq_categories.dart';
 import 'package:dms/screens/my_atc/my_atc_detail.dart';
 import 'package:dms/screens/products/productDetails.dart';
+import 'package:dms/services/orderservices.dart';
 import 'package:dms/splashscreen/splashscreen.dart';
 import 'package:dms/screens/support/new_support_request.dart';
 import 'package:dms/utils/colors.dart';
+import 'package:dms/utils/next_screen.dart';
 import 'package:dms/utils/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:nb_utils/nb_utils.dart';
+import 'package:provider/provider.dart';
 
 class Schedule extends StatefulWidget {
   int total;
   int cartTotal;
-  Schedule(this.total, this.cartTotal);
+  int dmsOrderId;
+  Schedule(this.total, this.cartTotal, this.dmsOrderId);
 
   @override
   _ScheduleState createState() => _ScheduleState();
 }
 
 class _ScheduleState extends State<Schedule> {
+  SubmitDmsOrder? _submitOrders;
   var formKey = GlobalKey<FormState>();
   var deliveryDateCont = TextEditingController();
   var deliveryDateNode = FocusNode();
   var deliveryAddressCont = TextEditingController();
   var deliveryAddressNode = FocusNode();
+  @override
+  void initState() {
+    // submitOrder(
+    //     dmsOrderId,
+    //     truckSizeCode,
+    //     deliveryMethodCode,
+    //     plantCode,
+    //     deliveryDate,
+    //     deliveryCity,
+    //     deliveryStateCode,
+    //     deliveryAddress,
+    //     deliveryCountryCode);
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     final _screenWidth = MediaQuery.of(context).size.width;
@@ -388,5 +412,55 @@ class _ScheduleState extends State<Schedule> {
         ),
       ),
     );
+  }
+
+  void submitOrder(
+      int dmsOrderId,
+      String truckSizeCode,
+      String deliveryMethodCode,
+      String plantCode,
+      DateTime deliveryDate,
+      String deliveryCity,
+      String deliveryStateCode,
+      String deliveryAddress,
+      String deliveryCountryCode) {
+    Provider.of<OrderBloc>(context)
+        .submitDmsOrder(
+            dmsOrderId,
+            truckSizeCode,
+            deliveryMethodCode,
+            plantCode,
+            deliveryDate,
+            deliveryCity,
+            deliveryStateCode,
+            deliveryAddress,
+            deliveryCountryCode)
+        .then((value) => output(value));
+  }
+
+  output(String payloadResponse) {
+    print("There you go.Seyi..lets submit orders");
+    if (payloadResponse.contains("data")) {
+      var dataB = jsonDecode(payloadResponse);
+      if (dataB["statusCode"] == 200) {
+        Provider.of<OrderBloc>(context).isLoading = false;
+        setState(() {
+          _submitOrders = SubmitDmsOrder.fromJson(dataB);
+        });
+        // nextScreen(
+        //     context, VerifyyOTP(_submitOrders!.data2!.otp!.otpId.toString()));
+      } else if (dataB["statusCode"] == 401) {
+        Provider.of<OrderBloc>(context).isLoading = false;
+        toast("Unauthorized");
+      } else if (dataB["statusCode"] == 404) {
+        Provider.of<OrderBloc>(context).isLoading = false;
+        toast("Resource not found");
+      } else {
+        setState(() {
+          _submitOrders = SubmitDmsOrder.fromJson(dataB);
+        });
+        toast(_submitOrders!.message);
+      }
+    }
   }
 }

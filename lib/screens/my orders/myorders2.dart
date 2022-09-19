@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:dms/constant.dart';
 import 'package:dms/layout/appWidget.dart';
+import 'package:dms/model/ordermodels.dart';
 import 'package:dms/screens/accounts/accountdelete.dart';
 import 'package:dms/screens/auth/confirm_otp.dart';
 import 'package:dms/screens/auth/login_screen.dart';
@@ -18,22 +21,47 @@ import 'package:dms/utils/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import 'package:nb_utils/nb_utils.dart';
+import 'package:provider/provider.dart';
+
+import '../../layout/loading_indicator_widget.dart';
+import '../../services/orderservices.dart';
 
 class MyOrders2 extends StatefulWidget {
-  const MyOrders2({Key? key}) : super(key: key);
-
+  String status;
+  String sapNumber;
+  MyOrders2(this.status, this.sapNumber);
   @override
   _MyOrders2State createState() => _MyOrders2State();
 }
 
 class _MyOrders2State extends State<MyOrders2> {
+  bool emptyList = false;
+  List<DmsOrder>? _dmsData;
+  List<GetSapOrders> _getsapOrders = [];
+  GetSapOrders? _getSapOrders1;
+  List<GetDmsOrders> _getOrders = [];
+  GetDmsOrders? _getOrders1;
+  @override
+  void initState() {
+    Provider.of<OrderBloc>(context, listen: false).isLoading = true;
+    getDMS();
+    //getOrders();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: appWhite,
-      appBar: dmsAppBar(context, ""),
-      body: _body(context),
-    );
+    return Provider.of<OrderBloc>(context, listen: false).isLoading
+        ? Scaffold(
+            body: Center(child: LoadingIndicatorWidget()),
+          )
+        : Scaffold(
+            backgroundColor: appWhite,
+            appBar: dmsAppBar(context, ""),
+            body: _body(context),
+          );
   }
 
   Widget _body(BuildContext context) {
@@ -41,7 +69,6 @@ class _MyOrders2State extends State<MyOrders2> {
     double _height = MediaQuery.of(context).size.height;
     var mypadr = SizedBox(width: _width * .04);
     var mypadh = SizedBox(height: _height * .008);
-    var mypadh2 = SizedBox(height: _height * .015);
 
     return SingleChildScrollView(
       scrollDirection: Axis.vertical,
@@ -88,7 +115,8 @@ class _MyOrders2State extends State<MyOrders2> {
                             style: BorderStyle.solid)),
                     height: _height * .0533,
                     width: _width * 0.73,
-                    padding: EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                    padding: EdgeInsets.only(
+                        left: _width * .05, top: _height * .006),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
@@ -105,7 +133,7 @@ class _MyOrders2State extends State<MyOrders2> {
                               color: Color(0xffB7BBC5),
                               fontWeight: FontWeight.w400,
                               //fontFamily: fontRegular,
-                              fontSize: _height * .017,
+                              fontSize: _height * .014,
                             ),
                             textAlign: TextAlign.start,
                           ),
@@ -114,622 +142,504 @@ class _MyOrders2State extends State<MyOrders2> {
                     ),
                   ),
                 ),
-                Container(
-                  color: appColorPrimary,
-                  height: _height * .0569,
-                  width: _width * .1205,
-                  //child: Icon(Icons.filter),
-                  child: Image.asset("lib/assets/new.png"),
+                InkWell(
+                  onTap: () {
+                    showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return _filterDialog(context);
+                        });
+                  },
+                  child: Container(
+                    color: appColorPrimary,
+                    height: _height * .0569,
+                    width: _width * .1205,
+                    //child: Icon(Icons.filter),
+                    child: Image.asset(
+                      "lib/assets/new.png",
+                      height: _height * 0.019,
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-          mypadh,
-          mypadh,
-          mypadh,
-          Row(
-            children: [
-              mypadr,
-              _boxCustom1(context),
-            ],
-          ),
-          mypadh2,
-          Row(
-            children: [
-              mypadr,
-              _boxCustom2(context),
-            ],
-          ),
-          mypadh2,
-          _boxCustom3(context),
-          mypadh2,
-          _boxCustom4(context),
-          mypadh2,
-          _boxCustom5(context),
-          mypadh2,
-          _boxCustom6(context),
+          SizedBox(height: _height * .024),
+          emptyList
+              ? Column(
+                  children: [
+                    SizedBox(
+                      height: _height * .28,
+                    ),
+                    Text(
+                      "You have no ${widget.status} order at the moment",
+                      style: GoogleFonts.poppins(
+                          color: appColorPrimary,
+                          fontSize: _height * .018,
+                          fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                )
+              : Row(
+                  children: [
+                    mypadr,
+                    ..._dmsData!.map((e) => _boxCustom1(e)),
+                  ],
+                ),
         ],
       ),
     );
   }
 
-  Widget _boxCustom1(BuildContext context) {
-    double _width = MediaQuery.of(context).size.width;
-    double _height = MediaQuery.of(context).size.height;
-    //var mypaddingr2 = SizedBox(width: _width * 0.05);
-    var mypadhh = SizedBox(height: _height * .02);
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => OrderDetails()));
-      },
-      child: Container(
-        width: _width * .92,
-        height: _height * .104,
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurStyle: BlurStyle.outer,
-              blurRadius: 10,
-              spreadRadius: 0,
-              offset: Offset.zero,
-            ),
-          ],
-          color: appWhite,
-          borderRadius: BorderRadius.circular(5),
-        ),
-        child: SingleChildScrollView(
-          child: Column(children: [
-            SizedBox(
-              height: _height * .013,
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: _width * .05),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    children: [
-                      Text(
-                        "Order 12323342",
-                        style: GoogleFonts.openSans(
-                            fontSize: _height * .02,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xff343434)),
-                      ),
-                    ],
-                  ),
-                  //SizedBox(width: _width * .45),
-                  Text(
-                    "12-05-22",
-                    style: GoogleFonts.openSans(
-                      fontSize: _height * .02,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            mypadhh,
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: _width * .05),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  //mypaddingr2,
-                  // Text(
-                  //   "N20,000",
-                  //   style: GoogleFonts.openSans(
-                  //       fontSize: _height * .014,
-                  //       fontWeight: FontWeight.w400,
-                  //       color: Color(0xff00CC08)),
-                  // ),
-                  //SizedBox(width: _width * .54),
-                  Container(
-                    height: _height * .0236,
-                    width: _width * .0923,
-                    decoration: BoxDecoration(
-                        color: Color(0xffE4EBF3),
-                        borderRadius: BorderRadius.circular(5)),
-                    child: Center(
-                        child: Text(
-                      "Open",
-                      style: GoogleFonts.openSans(
-                          fontSize: _height * .0118,
-                          fontWeight: FontWeight.w400,
-                          color: Color(0xff8D93A1)),
-                    )),
-                  ),
-                ],
-              ),
-            ),
-          ]),
-        ),
-      ),
-    );
-  }
+  // Widget _boxCustom1(BuildContext context) {
+  //   double _width = MediaQuery.of(context).size.width;
+  //   double _height = MediaQuery.of(context).size.height;
+  //   //var mypaddingr2 = SizedBox(width: _width * 0.05);
+  //   var mypadhh = SizedBox(height: _height * .02);
+  //   return InkWell(
+  //     onTap: () {
+  //       Navigator.push(
+  //           context, MaterialPageRoute(builder: (context) => OrderDetails()));
+  //     },
+  //     child: Container(
+  //       width: _width * .92,
+  //       height: _height * .104,
+  //       decoration: BoxDecoration(
+  //         boxShadow: [
+  //           BoxShadow(
+  //             color: Colors.black12,
+  //             blurStyle: BlurStyle.outer,
+  //             blurRadius: 10,
+  //             spreadRadius: 0,
+  //             offset: Offset.zero,
+  //           ),
+  //         ],
+  //         color: appWhite,
+  //         borderRadius: BorderRadius.circular(5),
+  //       ),
+  //       child: SingleChildScrollView(
+  //         child: Column(children: [
+  //           SizedBox(
+  //             height: _height * .013,
+  //           ),
+  //           Padding(
+  //             padding: EdgeInsets.symmetric(horizontal: _width * .05),
+  //             child: Row(
+  //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //               children: [
+  //                 Column(
+  //                   children: [
+  //                     Text(
+  //                       "Order 12323342",
+  //                       style: GoogleFonts.openSans(
+  //                           fontSize: _height * .02,
+  //                           fontWeight: FontWeight.w700,
+  //                           color: Color(0xff343434)),
+  //                     ),
+  //                   ],
+  //                 ),
+  //                 //SizedBox(width: _width * .45),
+  //                 Text(
+  //                   "12-05-22",
+  //                   style: GoogleFonts.openSans(
+  //                     fontSize: _height * .02,
+  //                     fontWeight: FontWeight.w600,
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //           mypadhh,
+  //           Padding(
+  //             padding: EdgeInsets.symmetric(horizontal: _width * .05),
+  //             child: Row(
+  //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //               children: [
+  //                 //mypaddingr2,
+  //                 // Text(
+  //                 //   "N20,000",
+  //                 //   style: GoogleFonts.openSans(
+  //                 //       fontSize: _height * .014,
+  //                 //       fontWeight: FontWeight.w400,
+  //                 //       color: Color(0xff00CC08)),
+  //                 // ),
+  //                 //SizedBox(width: _width * .54),
+  //                 Container(
+  //                   height: _height * .0236,
+  //                   width: _width * .0923,
+  //                   decoration: BoxDecoration(
+  //                       color: Color(0xffE4EBF3),
+  //                       borderRadius: BorderRadius.circular(5)),
+  //                   child: Center(
+  //                       child: Text(
+  //                     "Open",
+  //                     style: GoogleFonts.openSans(
+  //                         fontSize: _height * .0118,
+  //                         fontWeight: FontWeight.w400,
+  //                         color: Color(0xff8D93A1)),
+  //                   )),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         ]),
+  //       ),
+  //     ),
+  //   );
+  // }
 
-  Widget _boxCustom2(BuildContext context) {
+  Widget _boxCustom1(DmsOrder _orderDms) {
+    final _format = NumberFormat("#,###,000.00");
     double _width = MediaQuery.of(context).size.width;
     double _height = MediaQuery.of(context).size.height;
-    //var mypaddingr2 = SizedBox(width: _width * 0.05);
     var mypadhh = SizedBox(height: _height * .02);
     return InkWell(
       onTap: () {
         Navigator.push(
-            context, MaterialPageRoute(builder: (context) => OrderDetails()));
+            context,
+            MaterialPageRoute(
+                builder: (context) => OrderDetails(_orderDms.dmsorderId!)));
       },
-      child: Container(
-        width: _width * .92,
-        height: _height * .104,
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurStyle: BlurStyle.outer,
-              blurRadius: 10,
-              spreadRadius: 0,
-              offset: Offset.zero,
-            ),
-          ],
-          color: appWhite,
-          borderRadius: BorderRadius.circular(5),
-        ),
-        child: SingleChildScrollView(
-          child: Column(children: [
-            SizedBox(
-              height: _height * .013,
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: _width * .05),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    children: [
-                      Text(
-                        "Order 12323342",
-                        style: GoogleFonts.openSans(
-                            fontSize: _height * .02,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xff343434)),
-                      ),
-                    ],
-                  ),
-                  //SizedBox(width: _width * .45),
-                  Text(
-                    "12-05-22",
-                    style: GoogleFonts.openSans(
-                      fontSize: _height * .02,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
+      child: Padding(
+        padding: EdgeInsets.only(bottom: _height * .01),
+        child: Container(
+          width: _width * .92,
+          height: _height * .104,
+          decoration: BoxDecoration(
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black12,
+                blurStyle: BlurStyle.outer,
+                blurRadius: 10,
+                spreadRadius: 0,
+                offset: Offset.zero,
               ),
-            ),
-            mypadhh,
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: _width * .05),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  //mypaddingr2,
-                  // Text(
-                  //   "N20,000",
-                  //   style: GoogleFonts.openSans(
-                  //       fontSize: _height * .014,
-                  //       fontWeight: FontWeight.w400,
-                  //       color: Color(0xff00CC08)),
-                  // ),
-                  //SizedBox(width: _width * .54),
-                  Container(
-                    height: _height * .0236,
-                    width: _width * .1564,
-                    decoration: BoxDecoration(
-                        color: Color.fromRGBO(142, 172, 222, 0.57),
-                        borderRadius: BorderRadius.circular(5)),
-                    child: Center(
-                        child: Text(
-                      "Processing",
+            ],
+            color: appWhite,
+            borderRadius: BorderRadius.circular(5),
+          ),
+          child: SingleChildScrollView(
+            child: Column(children: [
+              SizedBox(
+                height: _height * .013,
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: _width * .05),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      children: [
+                        Text(
+                          "Order${_orderDms.dmsorderId}",
+                          style: GoogleFonts.openSans(
+                            fontSize: _height * .02,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      _orderDms.dateCreated!.day.toString() +
+                          "-" +
+                          _orderDms.dateCreated!.month.toString() +
+                          "-" +
+                          _orderDms.dateCreated!.year.toString(),
                       style: GoogleFonts.openSans(
-                          fontSize: _height * .0118,
-                          fontWeight: FontWeight.w400,
-                          color: Color(0xff191E2C)),
-                    )),
-                  ),
-                ],
-              ),
-            ),
-          ]),
-        ),
-      ),
-    );
-  }
-
-  Widget _boxCustom3(BuildContext context) {
-    double _width = MediaQuery.of(context).size.width;
-    double _height = MediaQuery.of(context).size.height;
-    //var mypaddingr2 = SizedBox(width: _width * 0.05);
-    var mypadhh = SizedBox(height: _height * .02);
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => OrderDetails()));
-      },
-      child: Container(
-        width: _width * .92,
-        height: _height * .104,
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurStyle: BlurStyle.outer,
-              blurRadius: 10,
-              spreadRadius: 0,
-              offset: Offset.zero,
-            ),
-          ],
-          color: appWhite,
-          borderRadius: BorderRadius.circular(5),
-        ),
-        child: SingleChildScrollView(
-          child: Column(children: [
-            SizedBox(
-              height: _height * .013,
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: _width * .05),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    children: [
-                      Text(
-                        "Order 12323342",
-                        style: GoogleFonts.openSans(
-                            fontSize: _height * .02,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xff343434)),
+                        fontSize: _height * .02,
+                        fontWeight: FontWeight.w600,
                       ),
-                    ],
-                  ),
-                  //SizedBox(width: _width * .45),
-                  Text(
-                    "12-05-22",
-                    style: GoogleFonts.openSans(
-                      fontSize: _height * .02,
-                      fontWeight: FontWeight.w600,
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            mypadhh,
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: _width * .05),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  //mypaddingr2,
-                  // Text(
-                  //   "N20,000",
-                  //   style: GoogleFonts.openSans(
-                  //       fontSize: _height * .014,
-                  //       fontWeight: FontWeight.w400,
-                  //       color: Color(0xff00CC08)),
-                  // ),
-                  //SizedBox(width: _width * .54),
-                  Container(
-                    height: _height * .0236,
-                    width: _width * .236,
-                    decoration: BoxDecoration(
-                        color: Color.fromRGBO(236, 28, 36, 0.3),
-                        borderRadius: BorderRadius.circular(5)),
-                    child: Center(
-                        child: Text(
-                      "Awaiting Loading",
-                      style: GoogleFonts.openSans(
-                          fontSize: _height * .0118,
-                          fontWeight: FontWeight.w400,
-                          color: Color.fromRGBO(236, 28, 36, 1)),
-                    )),
-                  ),
-                ],
-              ),
-            ),
-          ]),
-        ),
-      ),
-    );
-  }
-
-  Widget _boxCustom4(BuildContext context) {
-    double _width = MediaQuery.of(context).size.width;
-    double _height = MediaQuery.of(context).size.height;
-    //var mypaddingr2 = SizedBox(width: _width * 0.05);
-    var mypadhh = SizedBox(height: _height * .02);
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => OrderDetails()));
-      },
-      child: Container(
-        width: _width * .92,
-        height: _height * .104,
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurStyle: BlurStyle.outer,
-              blurRadius: 10,
-              spreadRadius: 0,
-              offset: Offset.zero,
-            ),
-          ],
-          color: appWhite,
-          borderRadius: BorderRadius.circular(5),
-        ),
-        child: SingleChildScrollView(
-          child: Column(children: [
-            SizedBox(
-              height: _height * .013,
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: _width * .05),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    children: [
-                      Text(
-                        "Order 12323342",
-                        style: GoogleFonts.openSans(
-                            fontSize: _height * .02,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xff343434)),
-                      ),
-                    ],
-                  ),
-                  //SizedBox(width: _width * .45),
-                  Text(
-                    "12-05-22",
-                    style: GoogleFonts.openSans(
-                      fontSize: _height * .02,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            mypadhh,
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: _width * .05),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  //mypaddingr2,
-                  // Text(
-                  //   "N20,000",
-                  //   style: GoogleFonts.openSans(
-                  //       fontSize: _height * .014,
-                  //       fontWeight: FontWeight.w400,
-                  //       color: Color(0xff00CC08)),
-                  // ),
-                  //SizedBox(width: _width * .54),
-                  Container(
-                    height: _height * .0236,
-                    width: _width * .1615,
-                    decoration: BoxDecoration(
-                        color: Color.fromRGBO(186, 207, 255, 0.2),
-                        borderRadius: BorderRadius.circular(5)),
-                    child: Center(
-                        child: Text(
-                      "Dispatched",
-                      style: GoogleFonts.openSans(
-                          fontSize: _height * .0118,
-                          fontWeight: FontWeight.w400,
-                          color: appColorPrimary),
-                    )),
-                  ),
-                ],
-              ),
-            ),
-          ]),
-        ),
-      ),
-    );
-  }
-
-  Widget _boxCustom5(BuildContext context) {
-    double _width = MediaQuery.of(context).size.width;
-    double _height = MediaQuery.of(context).size.height;
-    //var mypaddingr2 = SizedBox(width: _width * 0.05);
-    var mypadhh = SizedBox(height: _height * .02);
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => OrderDetails()));
-      },
-      child: Container(
-        width: _width * .92,
-        height: _height * .104,
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurStyle: BlurStyle.outer,
-              blurRadius: 10,
-              spreadRadius: 0,
-              offset: Offset.zero,
-            ),
-          ],
-          color: appWhite,
-          borderRadius: BorderRadius.circular(5),
-        ),
-        child: SingleChildScrollView(
-          child: Column(children: [
-            SizedBox(
-              height: _height * .013,
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: _width * .05),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    children: [
-                      Text(
-                        "Order 12323342",
-                        style: GoogleFonts.openSans(
-                            fontSize: _height * .02,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xff343434)),
-                      ),
-                    ],
-                  ),
-                  //SizedBox(width: _width * .45),
-                  Text(
-                    "12-05-22",
-                    style: GoogleFonts.openSans(
-                      fontSize: _height * .02,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            mypadhh,
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: _width * .05),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  //mypaddingr2,
-                  // Text(
-                  //   "N20,000",
-                  //   style: GoogleFonts.openSans(
-                  //       fontSize: _height * .014,
-                  //       fontWeight: FontWeight.w400,
-                  //       color: Color(0xff00CC08)),
-                  // ),
-                  //SizedBox(width: _width * .54),
-                  Container(
-                      height: _height * .0236,
-                      width: _width * .2256,
+              mypadhh,
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: _width * .05),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      height: _height * .0284,
+                      width: _width * .305,
                       decoration: BoxDecoration(
-                          color: Color(0xffB2EFFF),
+                          color: Color(0xffE4EBF3).withOpacity(0.5),
                           borderRadius: BorderRadius.circular(5)),
                       child: Center(
-                        child: Text("Enroute Delivery",
-                            style: GoogleFonts.openSans(
-                                fontSize: _height * .0118,
-                                fontWeight: FontWeight.w400,
-                                color: appColorPrimary)),
+                          child: Text(
+                        _orderDms.orderStatus!.code!,
+                        style: GoogleFonts.openSans(
+                            fontSize: _height * .0118,
+                            fontWeight: FontWeight.w400,
+                            color: Color(0xff8D93A1)),
                       )),
-                ],
+                    ),
+                    InkWell(
+                      onTap: () {},
+                      child: Image.asset(
+                        "lib/assets/dell.png",
+                        height: _height * .016,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ]),
+            ]),
+          ),
         ),
       ),
     );
   }
 
-  Widget _boxCustom6(BuildContext context) {
+  Widget _filterDialog(BuildContext context) {
     double _width = MediaQuery.of(context).size.width;
     double _height = MediaQuery.of(context).size.height;
-    //var mypaddingr2 = SizedBox(width: _width * 0.05);
-    var mypadhh = SizedBox(height: _height * .02);
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => OrderDetails()));
-      },
-      child: Container(
-        width: _width * .92,
-        height: _height * .104,
+    var containerheight = _height * .354;
+    var _mypadding = SizedBox(height: containerheight * .12);
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurStyle: BlurStyle.outer,
-              blurRadius: 10,
-              spreadRadius: 0,
-              offset: Offset.zero,
-            ),
-          ],
           color: appWhite,
-          borderRadius: BorderRadius.circular(5),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
         ),
+        height: containerheight,
+        //color: Colors.black,
         child: SingleChildScrollView(
-          child: Column(children: [
-            SizedBox(
-              height: _height * .013,
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: _width * .05),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    children: [
-                      Text(
-                        "Order 12323342",
-                        style: GoogleFonts.openSans(
-                            fontSize: _height * .02,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xff343434)),
+          scrollDirection: Axis.vertical,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+                _width * .06, _height * .037, _width * .06, _height * .037),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Filter Orders",
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600,
+                        fontSize: _height * .0284,
+                        color: appColorPrimary,
                       ),
-                    ],
-                  ),
-                  //SizedBox(width: _width * .45),
-                  Text(
-                    "12-05-22",
-                    style: GoogleFonts.openSans(
-                      fontSize: _height * .02,
-                      fontWeight: FontWeight.w600,
+                    ),
+                  ],
+                ),
+                SizedBox(
+                  height: _height * .023,
+                ),
+                GestureDetector(
+                  onTap: () {},
+                  child: Container(
+                    decoration: BoxDecoration(
+                        color: inputBackgroundColor,
+                        border: Border.all(
+                            color: inputBorderColor,
+                            width: 1,
+                            style: BorderStyle.solid)),
+                    height: _height * .0533,
+                    width: _width,
+                    // padding: EdgeInsets.symmetric(horizontal: _width *.04),
+                    child: Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: _width * .04),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Date Created",
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w400,
+                                fontSize: _height * .0166,
+                                color: Color(0xffB1BBC6),
+                              ),
+                            ),
+                            InkWell(
+                              onTap: () {},
+                              child: Icon(
+                                Icons.calendar_month,
+                                color: Color(0xff999999),
+                                size: _height * .025,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                ],
-              ),
-            ),
-            mypadhh,
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: _width * .05),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  //mypaddingr2,
-                  // Text(
-                  //   "N20,000",
-                  //   style: GoogleFonts.openSans(
-                  //       fontSize: _height * .014,
-                  //       fontWeight: FontWeight.w400,
-                  //       color: Color(0xff00CC08)),
-                  // ),
-                  //SizedBox(width: _width * .54),
-                  Container(
-                    height: _height * .0236,
-                    width: _width * .14,
+                ),
+                SizedBox(
+                  height: _height * .018,
+                ),
+                GestureDetector(
+                  onTap: () {},
+                  child: Container(
                     decoration: BoxDecoration(
-                        color: Color.fromRGBO(39, 174, 96, 0.13),
-                        borderRadius: BorderRadius.circular(5)),
+                        color: inputBackgroundColor,
+                        border: Border.all(
+                            color: inputBorderColor,
+                            width: 1,
+                            style: BorderStyle.solid)),
+                    height: _height * .0533,
+                    width: _width,
+                    // padding: EdgeInsets.symmetric(horizontal: _width *.04),
+                    child: Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: _width * .04),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "_getOrders[2].data!.isAtc.toString()",
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w400,
+                                fontSize: _height * .0166,
+                                color: Color(0xffB1BBC6),
+                              ),
+                            ),
+                            InkWell(
+                              onTap: () {},
+                              child: Icon(
+                                Icons.arrow_drop_down,
+                                color: Color(0xff999999),
+                                size: _height * .0296,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: _height * .022,
+                ),
+                InkWell(
+                  onTap: () {
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    width: _width,
+                    height: _height * .0633,
+                    decoration: BoxDecoration(
+                      color: appColorPrimary,
+                    ),
                     child: Center(
                         child: Text(
-                      "Delivered",
-                      style: GoogleFonts.openSans(
-                          fontSize: _height * .0118,
-                          fontWeight: FontWeight.w400,
-                          color: Color(0xff27AE60)),
+                      "Set Filter",
+                      style: GoogleFonts.poppins(
+                        color: white,
+                        fontSize: _height * .016,
+                        fontWeight: FontWeight.w500,
+                      ),
                     )),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ]),
+          ),
         ),
       ),
     );
+  }
+
+  void getDMS() {
+    Provider.of<OrderBloc>(context, listen: false)
+        .getmyDMSOrders(widget.status, widget.sapNumber)
+        .then((value) => _output(value));
+  }
+
+  _output(String dmsList) {
+    List empty = [];
+    var bodyT = jsonDecode(dmsList);
+    if (dmsList.contains("data")) {
+      if (bodyT["status"] == "Successful") {
+        if (bodyT["data"]["dmsOrders"] != empty) {
+          Provider.of<OrderBloc>(context, listen: false).isLoading = false;
+          dynamic _gettX = bodyT;
+          List myList = _gettX["data"]["dmsOrders"];
+          if (myList.isEmpty) {
+            emptyList = true;
+            toast("Oops.No Orders");
+          }
+          setState(() {
+            _dmsData =
+                myList.map<DmsOrder>((e) => DmsOrder.fromJson(e)).toList();
+          });
+        } else {
+          toast(bodyT["message"]);
+        }
+      }
+    }
+  }
+
+  void getOrders() {
+    Provider.of<OrderBloc>(context, listen: false)
+        .getmyDMSOrders(widget.status, widget.sapNumber)
+        .then((value) => _outputY(value));
+    Provider.of<OrderBloc>(context, listen: false)
+        .getmySAPOrders()
+        .then((value) => _sapOutput(value));
+  }
+
+  _outputY(String orderList) {
+    print("There you go.Seyi");
+    var _data = jsonDecode(orderList);
+    if (orderList.contains("data")) {
+      print(_data.runtimeType);
+      if (_data["responseCode"] == 200) {
+        Provider.of<OrderBloc>(context, listen: false).isLoading = false;
+        dynamic _value = _data;
+        setState(() {
+          _getOrders = _value
+              .map<GetDmsOrders>((e) => GetDmsOrders.fromJson(e))
+              .toList();
+          print(_getOrders[0].data!.countryCode);
+        });
+      } else if (_data["responseCode" == 401]) {
+        Provider.of<OrderBloc>(context, listen: false).isLoading = false;
+        toast("Unauthorized Request");
+      } else if (_data["responseCode" == 404]) {
+        Provider.of<OrderBloc>(context, listen: false).isLoading = false;
+        toast("Resource Not Found");
+      } else {
+        setState(() {
+          _getOrders1 = GetDmsOrders.fromJson(_data);
+        });
+        toast(_getOrders1!.message);
+      }
+    }
+  }
+
+  _sapOutput(String sapList) {
+    print("There you go.Seyi");
+    var _sapdata = jsonDecode(sapList);
+    if (sapList.contains("data")) {
+      print(_sapdata.runtimeType);
+      if (_sapdata["responseCode"] == 200) {
+        Provider.of<OrderBloc>(context, listen: false).isLoading = false;
+        dynamic _value = _sapdata;
+        setState(() {
+          _getOrders = _value
+              .map<GetSapOrders>((e) => GetSapOrders.fromJson(e))
+              .toList();
+          print(_getsapOrders[0].datab!.items);
+        });
+      } else if (_sapdata["responseCode" == 401]) {
+        Provider.of<OrderBloc>(context, listen: false).isLoading = false;
+        toast("Unauthorized Request");
+      } else if (_sapdata["responseCode" == 404]) {
+        Provider.of<OrderBloc>(context, listen: false).isLoading = false;
+        toast("Resource Not Found");
+      } else {
+        setState(() {
+          _getSapOrders1 = GetSapOrders.fromJson(_sapdata);
+        });
+        toast(_getSapOrders1!.message);
+      }
+    }
   }
 }

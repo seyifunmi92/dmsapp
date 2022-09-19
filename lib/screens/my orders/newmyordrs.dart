@@ -4,20 +4,30 @@ import 'package:dms/layout/dms_drawer.dart';
 import 'package:dms/screens/my%20orders/myordersnew.dart';
 import 'package:dms/screens/my%20orders/neworders.dart';
 import 'package:dms/screens/my%20orders/savedorders.dart';
+import 'package:dms/services/orderservices.dart';
 import 'package:dms/utils/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 import 'myorders2.dart';
 
 class NewOrders extends StatefulWidget {
-  const NewOrders({Key? key}) : super(key: key);
+  String sapNumber;
+
+  NewOrders(this.sapNumber);
 
   @override
   _NewOrdersState createState() => _NewOrdersState();
 }
 
 class _NewOrdersState extends State<NewOrders> {
+  @override
+  void initState() {
+    print(widget.sapNumber);
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -72,8 +82,13 @@ class _NewOrdersState extends State<NewOrders> {
             mypadr,
             InkWell(
               onTap: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => NewOrdery()));
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => NewOrdery(
+                            Provider.of<OrderBloc>(context, listen: false)
+                                .statusNew,
+                            widget.sapNumber)));
               },
               child: Container(
                 decoration: BoxDecoration(
@@ -95,7 +110,9 @@ class _NewOrdersState extends State<NewOrders> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text("New",
+                      Text(
+                          Provider.of<OrderBloc>(context, listen: false)
+                              .statusNew,
                           style: GoogleFonts.poppins(
                             color: Color(0xff343434),
                             fontSize: _height * 0.019,
@@ -131,8 +148,13 @@ class _NewOrdersState extends State<NewOrders> {
             mypadr,
             InkWell(
               onTap: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => SavedOrders()));
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => SavedOrders(
+                            Provider.of<OrderBloc>(context, listen: false)
+                                .statusSaved,
+                            widget.sapNumber)));
               },
               child: Container(
                 decoration: BoxDecoration(
@@ -154,7 +176,9 @@ class _NewOrdersState extends State<NewOrders> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text("Saved",
+                      Text(
+                          Provider.of<OrderBloc>(context, listen: false)
+                              .statusSaved,
                           style: GoogleFonts.poppins(
                             color: Color(0xff343434),
                             fontSize: _height * 0.019,
@@ -190,8 +214,13 @@ class _NewOrdersState extends State<NewOrders> {
             mypadr,
             InkWell(
               onTap: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => MyOrders2()));
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => MyOrders2(
+                            Provider.of<OrderBloc>(context, listen: false)
+                                .statusSubmitted,
+                            widget.sapNumber)));
               },
               child: Container(
                 decoration: BoxDecoration(
@@ -213,7 +242,9 @@ class _NewOrdersState extends State<NewOrders> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text("Submitted",
+                      Text(
+                          Provider.of<OrderBloc>(context, listen: false)
+                              .statusSubmitted,
                           style: GoogleFonts.poppins(
                             color: Color(0xff343434),
                             fontSize: _height * 0.019,

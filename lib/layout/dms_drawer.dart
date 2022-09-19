@@ -61,6 +61,12 @@ class _DMSDrawerState extends State<DMSDrawer> {
   ];
 
   @override
+  void initState() {
+    Provider.of<LogInBloc>(context, listen: false).getSharedData();
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     int selectedIndex = DmsAppRoot.of(context)!.getSelected();
 
@@ -200,7 +206,6 @@ class _DMSDrawerState extends State<DMSDrawer> {
                               borderRadius: BorderRadius.circular(20),
                               color: Colors.grey,
                             ),
-
                             child: Image.asset(
                               "assets/icons/avatar.png",
                               height: 40,
@@ -216,14 +221,26 @@ class _DMSDrawerState extends State<DMSDrawer> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          Text(
-                            "Oluwatobi Olowu",
-                            style: GoogleFonts.poppins(
-                              color: Color(0xff000000),
-                              fontSize: _height * .02,
-                              fontWeight: FontWeight.w500,
-                            ),
+                          FutureBuilder(
+                            future:
+                                Provider.of<LogInBloc>(context, listen: false)
+                                    .getSharedData(),
+                            builder: (context, snapshot) {
+                              var userData = snapshot.data ?? "";
+                              if (snapshot.hasData) {
+                                return Text(
+                                  userData.toString(),
+                                  style: GoogleFonts.poppins(
+                                    color: Color(0xff000000),
+                                    fontSize: _height * .02,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                );
+                              } else
+                                return CircularProgressIndicator();
+                            },
                           ),
+
                           SizedBox(
                             height: _height * .0012,
                           ),
@@ -517,11 +534,9 @@ class _DMSDrawerState extends State<DMSDrawer> {
   }
 }
 
-Future logOut(BuildContext context) async{
+Future logOut(BuildContext context) async {
   final LogInBloc lb = context.read<LogInBloc>();
   await lb
       .userSignout()
       .then((value) => nextScreenCloseOthers(context, LoginScreen()));
 }
-
-

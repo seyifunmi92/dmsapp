@@ -1,0 +1,86 @@
+
+{
+    "data": {
+      "dmsOrder": {
+        "id": 23,
+        "dateCreated": "2022-09-18T11:53:32.14",
+        "orderSapNumber": null,
+        "parentOrderSapNumber": null,
+        "isAtc": false,
+        "companyCode": "NASCOM",
+        "countryCode": "NG",
+        "distributorSapAccountId": 0,
+        "orderStatusId": 0,
+        "orderTypeId": 0,
+        "shoppingCartId": 0,
+        "estimatedNetValue": 23000,
+        "orderSapNetValue": null,
+        "deliveryDate": null,
+        "deliveryAddress": null,
+        "truckSizeCode": null,
+        "deliveryCity": null,
+        "plantCode": null,
+        "sapVat": null,
+        "sapFreightCharges": null,
+        "distributorSapAccount": {
+          "distributorSapAccountId": 3,
+          "userId": 0,
+          "distributorSapNumber": "00109",
+          "distributorName": "Dayo Ale & Sons",
+          "dateRefreshed": "0001-01-01T00:00:00",
+          "companyCode": null,
+          "countryCode": null,
+          "accountType": null
+        },
+        "orderStatus": {
+          "id": 0,
+          "code": "New",
+          "name": "New"
+        },
+        "orderType": {
+          "id": 0,
+          "code": "ZQT",
+          "name": "Quotation"
+        },
+        "deliveryStatus": null,
+        "plant": null,
+        "truckSize": {
+          "code": null,
+          "name": null
+        },
+        "deliveryMethod": {
+          "code": null,
+          "name": null
+        },
+        "orderItems": [
+          {
+            "id": 17,
+            "dateCreated": "0001-01-01T00:00:00",
+            "dateModified": null,
+            "orderId": 0,
+            "userId": 0,
+            "orderItemSapNumber": null,
+            "quantity": 10,
+            "salesUnitOfMeasureCode": null,
+            "productId": 0,
+            "sapPricePerUnit": null,
+            "sapNetValue": null,
+            "sapDeliveryQuality": null,
+            "product": {
+              "id": 3,
+              "name": "Dangote Brown Sugar",
+              "productSapNumber": null,
+              "companyCode": null,
+              "countryCode": null,
+              "unitOfMeasureCode": null,
+              "dateRefreshed": "0001-01-01T00:00:00",
+              "price": 2300
+            }
+          }
+        ]
+      }
+    },
+    "status": "Successful",
+    "statusCode": "00",
+    "message": "The Request Order you have requested for has been successfully fetched."
+  }

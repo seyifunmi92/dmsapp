@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../blocs/cart_bloc.dart';
 import '../model/account_item.dart';
 import '../utils/colors.dart';
+import 'loading_indicator_widget.dart';
 
 class AccountPicker extends StatefulWidget {
   const AccountPicker({Key? key}) : super(key: key);
@@ -49,8 +50,9 @@ class _AccountPickerState extends State<AccountPicker> {
           SizedBox(
             height: 20,
           ),
+          accountList.isEmpty ? LoadingIndicatorWidget() : Container(),
           ...accountList.map(
-                  (e) => AccountCustom(e.friendlyName ?? "Unknown Name", e.distributorSapNumber.toInt()))
+                  (e) => AccountCustom(e.friendlyName ?? "Distributor Name", e.sapAccountId!.toInt()))
         ],
       )),
     );

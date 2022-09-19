@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:dms/layout/appWidget.dart';
 import 'package:dms/layout/dms_drawer.dart';
 import 'package:dms/screens/carts/checkout.dart';
@@ -5,8 +8,15 @@ import 'package:dms/utils/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:nb_utils/nb_utils.dart';
+import 'package:provider/provider.dart';
 
+import '../../blocs/cart_bloc.dart';
 import '../../blocs/counterbloc.dart';
+import '../../layout/loading_indicator_widget.dart';
+import '../../model/cart_item_model.dart';
+import '../../model/shopping_cart.dart';
+import '../../network/network_utils.dart';
 
 class Carts extends StatefulWidget {
   const Carts({Key? key}) : super(key: key);
@@ -24,17 +34,56 @@ class cartList {
 
 class _CartsState extends State<Carts> {
   int currentIndex = 0;
-  void _increaseIndex() {
-    setState(() {
-      currentIndex++;
-    });
+  void _inceaseItem(CartItem item) async {
+    final CartBloc cb = Provider.of<CartBloc>(context, listen: false);
+    final baseUrl = cb.cartBaseUrl;
+    print(baseUrl);
+    try {
+      Map req = {"shoppingCartItemId": item.shoppingCartItemId, "quantity": item.quantity! + 1};
+      var response = await putRequestWithToken('$baseUrl/cart/cartitem/${item.shoppingCartItemId}', req);
+
+      if (this.mounted) {
+        if (response.statusCode == 200) {
+          var decodedData = jsonDecode(response.body);
+          toast(decodedData['message'], length: Toast.LENGTH_LONG);
+          setState(() {
+            item.quantity = item.quantity! - 1;
+          });
+        }
+      }
+    } on SocketException {
+      throw 'No Internet connection';
+    }
   }
 
-  void _decreaseIndex() {
-    setState(() {
-      currentIndex--;
-    });
+  bool isLoading = false;
+  List<CartItem> shoppingCarts = [];
+  int subTotal = 0;
+  int totalAmount = 0;
+
+  void _decreaseitem(CartItem item) async {
+    final CartBloc cb = Provider.of<CartBloc>(context, listen: false);
+    final baseUrl = cb.cartBaseUrl;
+    print(baseUrl);
+    try {
+      Map req = {"shoppingCartItemId": item.shoppingCartItemId, "quantity": item.quantity! - 1};
+      var response = await putRequestWithToken('$baseUrl/cart/cartitem/${item.shoppingCartItemId}', req);
+
+      if (this.mounted) {
+        if (response.statusCode == 200) {
+          var decodedData = jsonDecode(response.body);
+          toast(decodedData['message'], length: Toast.LENGTH_LONG);
+          setState(() {
+            item.quantity = item.quantity! - 1;
+          });
+        }
+      }
+    } on SocketException {
+      throw 'No Internet connection';
+    }
+
   }
+
 
   List<cartList> cartProducts = [
     cartList("lib/assets/dang.png", "Bags of Cement", 1650),
@@ -50,6 +99,7 @@ class _CartsState extends State<Carts> {
   @override
   void initState() {
     //addCost();
+    getAllCartItem();
     super.initState();
   }
 
@@ -108,11 +158,12 @@ class _CartsState extends State<Carts> {
           ),
         ),
         SizedBox(height: _height * .023),
+        shoppingCarts.isEmpty ? LoadingIndicatorWidget() : Container(),
         Expanded(
             child: ListView.builder(
-                itemCount: cartProducts.length,
+                itemCount: shoppingCarts.length,
                 itemBuilder: (BuildContext context, int index) {
-                  var mycart = cartProducts[index];
+                  var mycart = shoppingCarts[index];
                   return Column(
                     children: [
                       InkWell(
@@ -145,14 +196,14 @@ class _CartsState extends State<Carts> {
                                       height: _height * .113,
                                       width: _width * .164,
                                       child: Image.asset(
-                                        mycart.imageUrl,
+                                        "lib/assets/dang.png",
                                         fit: BoxFit.fill,
                                       )),
                                   Column(
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
                                       Text(
-                                        mycart.title,
+                                        mycart.product!.name ?? "Product Name",
                                         style: GoogleFonts.poppins(
                                           fontSize: _height * .02,
                                           fontWeight: FontWeight.w600,
@@ -162,7 +213,7 @@ class _CartsState extends State<Carts> {
                                       ),
                                       SizedBox(height: _height * 0.005),
                                       Text(
-                                        "\N${formatter.format(mycart.amount)}.00",
+                                        "N${formatter.format(mycart.product!.price)}.00",
                                         style: GoogleFonts.poppins(
                                           fontSize: _height * .017,
                                           fontWeight: FontWeight.w600,
@@ -177,7 +228,11 @@ class _CartsState extends State<Carts> {
                                         children: [
                                           InkWell(
                                             onTap: () {
-                                              _decreaseIndex();
+                                              var qty = mycart.quantity!;
+                                              if (qty <= 1) return;
+                                              var q = qty - 1;
+                                              mycart.quantity = q;
+                                              _decreaseitem(mycart);
                                               // _bloc.counterEventSink
                                               //     .add(DecreaseCount2());
                                             },
@@ -196,7 +251,7 @@ class _CartsState extends State<Carts> {
                                           ),
                                           SizedBox(width: _width * .05),
                                           Text(
-                                            currentIndex.toString(),
+                                            mycart.quantity.toString(),
                                             style: GoogleFonts.montserrat(
                                               fontSize: _height * 0.02,
                                               fontWeight: FontWeight.w500,
@@ -205,7 +260,9 @@ class _CartsState extends State<Carts> {
                                           SizedBox(width: _width * .05),
                                           InkWell(
                                             onTap: () {
-                                              _increaseIndex();
+                                              var mainCount = mycart.quantity! + 1;
+                                              mycart.quantity = mainCount;
+                                              _inceaseItem(mycart);
                                               // _bloc.counterEventSink
                                               //     .add(IncreaseCount2());
                                             },
@@ -243,14 +300,12 @@ class _CartsState extends State<Carts> {
 
   Widget _bottomBar(context) {
     addCost() async {
-      int _data = cartProducts[0].amount +
-          cartProducts[1].amount +
-          cartProducts[2].amount +
-          cartProducts[3].amount +
-          cartProducts[4].amount;
-      print("Seyi baba");
-      print(_data);
-      return _data;
+      int sum = 0;
+      for (var i = 0; i < shoppingCarts.length; i++) {
+        sum += shoppingCarts[i].product!.price!;
+      }
+
+      return sum;
     }
 
     double _width = MediaQuery.of(context).size.width;
@@ -288,7 +343,7 @@ class _CartsState extends State<Carts> {
                   color: Color(0xff7A7C85)),
             ),
             Text(
-              cartProducts.length.toString(),
+              shoppingCarts.length.toString(),
               style: GoogleFonts.poppins(
                   fontSize: _height * .019,
                   fontWeight: FontWeight.w500,
@@ -353,7 +408,7 @@ class _CartsState extends State<Carts> {
                               MaterialPageRoute(
                                   builder: (context) => Checkout(
                                       int.parse(_total.toString()),
-                                      cartProducts.length)));
+                                      shoppingCarts.length)));
                         },
                         child: Center(
                           child: Text(
@@ -382,34 +437,33 @@ class _CartsState extends State<Carts> {
 
   void getAllCartItem() async {
 
-    // isLoading = true;
-    // Map req = {"productId": widget.productId, "distributorSapAccountId": distributorSapAccountId, "channelCode": "Mobile", "quantity": quantity, "unitOfMeasureCode": "kg"};
-    //
-    // await postRequest('https://dms-order-ms.azurewebsites.net/api/cart/cartitem', req).then((value) {
-    //   print(value);
-    //   if (value.statusCode.isSuccessful()) {
-    //     var data = jsonDecode(value.body);
-    //     print(data);
-    //     toast(data['message'], length: Toast.LENGTH_LONG);
-    //     setState(() {
-    //       isLoading = false;
-    //     });
-    //   } else {
-    //     if (value.body.isJson()) {
-    //       var data = jsonDecode(value.body);
-    //       print("Omo Error $data");
-    //       toast(data['message'], length: Toast.LENGTH_LONG);
-    //       setState(() {
-    //         isLoading = false;
-    //       });
-    //     }
-    //   }
-    // }).catchError((e) {
-    //   isLoading = false;
-    //   toast("We are unable to complete your request at this time", length: Toast.LENGTH_LONG);
-    //   print(e.toString());
-    //   setState(() {});
+      final CartBloc cb = Provider.of<CartBloc>(context, listen: false);
+      final baseUrl = cb.cartBaseUrl;
+      print(baseUrl);
+      try {
+        setState(() {
+          isLoading = true;
+        });
+        var response = await getRequestWithToken('$baseUrl/cart');
 
-    });
+        if (this.mounted) {
+          if (response.statusCode == 200) {
+            var decodedData = jsonDecode(response.body);
+            List? newdata = decodedData["data"]["shoppingCart"]["shoppingCartItems"];
+            setState(() {
+              shoppingCarts = newdata!.map((m) => CartItem.fromJson(m)).toList();
+              isLoading = false;
+            });
+          }
+        }
+      } on SocketException {
+        setState(() {
+          isLoading = false;
+        });
+        throw 'No Internet connection';
+
+      }
   }
+
+
 }

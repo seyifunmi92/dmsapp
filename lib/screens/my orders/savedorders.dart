@@ -1,25 +1,49 @@
+import 'dart:convert';
+
 import 'package:dms/layout/appWidget.dart';
 import 'package:dms/layout/dms_drawer.dart';
 import 'package:dms/screens/my%20orders/orderdetails.dart';
 import 'package:dms/utils/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import 'package:nb_utils/nb_utils.dart';
+import 'package:provider/provider.dart';
+
+import '../../layout/loading_indicator_widget.dart';
+import '../../model/ordermodels.dart';
+import '../../services/orderservices.dart';
 
 class SavedOrders extends StatefulWidget {
-  const SavedOrders({Key? key}) : super(key: key);
+  String status;
+  String sapNumber;
+  SavedOrders(this.status, this.sapNumber);
 
   @override
   _SavedOrdersState createState() => _SavedOrdersState();
 }
 
 class _SavedOrdersState extends State<SavedOrders> {
+  bool emptyList = false;
+  List<DmsOrder>? _dmsData;
+  @override
+  void initState() {
+    Provider.of<OrderBloc>(context, listen: false).isLoading = true;
+    getDMS();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: appWhite,
-      appBar: dmsAppBar(context, ""),
-      body: _body(context),
-    );
+    return Provider.of<OrderBloc>(context, listen: false).isLoading
+        ? Scaffold(
+            body: Center(child: LoadingIndicatorWidget()),
+          )
+        : Scaffold(
+            backgroundColor: appWhite,
+            appBar: dmsAppBar(context, ""),
+            body: _body(context),
+          );
   }
 
   Widget _body(BuildContext context) {
@@ -27,7 +51,6 @@ class _SavedOrdersState extends State<SavedOrders> {
     double _height = MediaQuery.of(context).size.height;
     var mypadr = SizedBox(width: _width * .04);
     var mypadh = SizedBox(height: _height * .008);
-    var mypadh2 = SizedBox(height: _height * .015);
 
     return SingleChildScrollView(
       scrollDirection: Axis.vertical,
@@ -74,7 +97,8 @@ class _SavedOrdersState extends State<SavedOrders> {
                             style: BorderStyle.solid)),
                     height: _height * .0533,
                     width: _width * 0.73,
-                    padding: EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                    padding: EdgeInsets.only(
+                        left: _width * .05, top: _height * .006),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
@@ -91,7 +115,7 @@ class _SavedOrdersState extends State<SavedOrders> {
                               color: Color(0xffB7BBC5),
                               fontWeight: FontWeight.w400,
                               //fontFamily: fontRegular,
-                              fontSize: _height * .017,
+                              fontSize: _height * .014,
                             ),
                             textAlign: TextAlign.start,
                           ),
@@ -100,668 +124,339 @@ class _SavedOrdersState extends State<SavedOrders> {
                     ),
                   ),
                 ),
-                Container(
-                  color: appColorPrimary,
-                  height: _height * .0569,
-                  width: _width * .1205,
-                  //child: Icon(Icons.filter),
-                  child: Image.asset("lib/assets/new.png"),
+                InkWell(
+                  onTap: () {
+                    showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return _filterDialog(context);
+                        });
+                  },
+                  child: Container(
+                    color: appColorPrimary,
+                    height: _height * .0569,
+                    width: _width * .1205,
+                    //child: Icon(Icons.filter),
+                    child: Image.asset(
+                      "lib/assets/new.png",
+                      height: _height * 0.019,
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
-          mypadh,
-          mypadh,
-          mypadh,
-          Row(
-            children: [
-              mypadr,
-              _boxCustom1(context),
-            ],
-          ),
-          mypadh2,
-          Row(
-            children: [
-              mypadr,
-              _boxCustom2(context),
-            ],
-          ),
-          mypadh2,
-          _boxCustom3(context),
-          mypadh2,
-          _boxCustom4(context),
-          mypadh2,
-          _boxCustom5(context),
-          mypadh2,
-          _boxCustom6(context),
-          mypadh2,
-          _boxCustom6(context),
+          SizedBox(height: _height * .024),
+          emptyList
+              ? Column(
+                  children: [
+                    SizedBox(
+                      height: _height * .28,
+                    ),
+                    Text(
+                      "You have no ${widget.status} order at the moment",
+                      style: GoogleFonts.poppins(
+                          color: appColorPrimary,
+                          fontSize: _height * .018,
+                          fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                )
+              : Row(
+                  children: [
+                    mypadr,
+                    ..._dmsData!.map((e) => _boxCustom1(e)),
+                  ],
+                ),
         ],
       ),
     );
   }
 
-  Widget _boxCustom1(BuildContext context) {
+  Widget _boxCustom1(DmsOrder _orderDms) {
+    final _format = NumberFormat("#,###,000.00");
     double _width = MediaQuery.of(context).size.width;
     double _height = MediaQuery.of(context).size.height;
-    //var mypaddingr2 = SizedBox(width: _width * 0.05);
     var mypadhh = SizedBox(height: _height * .02);
     return InkWell(
       onTap: () {
         Navigator.push(
-            context, MaterialPageRoute(builder: (context) => OrderDetails()));
+            context,
+            MaterialPageRoute(
+                builder: (context) => OrderDetails(_orderDms.dmsorderId!)));
       },
-      child: Container(
-        width: _width * .92,
-        height: _height * .104,
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurStyle: BlurStyle.outer,
-              blurRadius: 10,
-              spreadRadius: 0,
-              offset: Offset.zero,
-            ),
-          ],
-          color: appWhite,
-          borderRadius: BorderRadius.circular(5),
-        ),
-        child: SingleChildScrollView(
-          child: Column(children: [
-            SizedBox(
-              height: _height * .013,
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: _width * .05),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    children: [
-                      Text(
-                        "12-05-22",
-                        style: GoogleFonts.openSans(
-                          fontSize: _height * .02,
-                          fontWeight: FontWeight.w600,
+      child: Padding(
+        padding: EdgeInsets.only(bottom: _height * .01),
+        child: Container(
+          width: _width * .92,
+          height: _height * .104,
+          decoration: BoxDecoration(
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black12,
+                blurStyle: BlurStyle.outer,
+                blurRadius: 10,
+                spreadRadius: 0,
+                offset: Offset.zero,
+              ),
+            ],
+            color: appWhite,
+            borderRadius: BorderRadius.circular(5),
+          ),
+          child: SingleChildScrollView(
+            child: Column(children: [
+              SizedBox(
+                height: _height * .013,
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: _width * .05),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      children: [
+                        Text(
+                          _orderDms.dateCreated!.day.toString() +
+                              "-" +
+                              _orderDms.dateCreated!.month.toString() +
+                              "-" +
+                              _orderDms.dateCreated!.year.toString(),
+                          style: GoogleFonts.openSans(
+                            fontSize: _height * .02,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  //SizedBox(width: _width * .45),
-                  Text(
-                    "N200,000",
-                    style: GoogleFonts.openSans(
-                      fontSize: _height * .02,
-                      fontWeight: FontWeight.w600,
+                      ],
                     ),
-                  ),
-                ],
-              ),
-            ),
-            mypadhh,
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: _width * .05),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  //mypaddingr2,
-                  // Text(
-                  //   "N20,000",
-                  //   style: GoogleFonts.openSans(
-                  //       fontSize: _height * .014,
-                  //       fontWeight: FontWeight.w400,
-                  //       color: Color(0xff00CC08)),
-                  // ),
-                  //SizedBox(width: _width * .54),
-                  Container(
-                    height: _height * .0284,
-                    width: _width * .305,
-                    decoration: BoxDecoration(
-                        color: Color(0xffE4EBF3).withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(5)),
-                    child: Center(
-                        child: Text(
-                      "Pending OTP Validation",
+                    Text(
+                      _orderDms.estimatedNetvalue != 0.00
+                          ? "\₦${_format.format(_orderDms.estimatedNetvalue)}"
+                          : "\₦0.00",
                       style: GoogleFonts.openSans(
-                          fontSize: _height * .0118,
-                          fontWeight: FontWeight.w400,
-                          color: Color(0xff8D93A1)),
-                    )),
-                  ),
-                  InkWell(
-                    onTap: () {},
-                    child: Image.asset(
-                      "lib/assets/dell.png",
-                      height: _height * .016,
+                        fontSize: _height * .02,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ]),
+              mypadhh,
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: _width * .05),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      height: _height * .0284,
+                      width: _width * .305,
+                      decoration: BoxDecoration(
+                          color: Color(0xffE4EBF3).withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(5)),
+                      child: Center(
+                          child: Text(
+                        _orderDms.orderType!.code!,
+                        style: GoogleFonts.openSans(
+                            fontSize: _height * .0118,
+                            fontWeight: FontWeight.w400,
+                            color: Color(0xff8D93A1)),
+                      )),
+                    ),
+                    InkWell(
+                      onTap: () {},
+                      child: Image.asset(
+                        "lib/assets/dell.png",
+                        height: _height * .016,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ]),
+          ),
         ),
       ),
     );
   }
 
-  Widget _boxCustom2(BuildContext context) {
+  Widget _filterDialog(BuildContext context) {
     double _width = MediaQuery.of(context).size.width;
     double _height = MediaQuery.of(context).size.height;
-    //var mypaddingr2 = SizedBox(width: _width * 0.05);
-    var mypadhh = SizedBox(height: _height * .02);
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => OrderDetails()));
-      },
-      child: Container(
-        width: _width * .92,
-        height: _height * .104,
+    var containerheight = _height * .354;
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurStyle: BlurStyle.outer,
-              blurRadius: 10,
-              spreadRadius: 0,
-              offset: Offset.zero,
-            ),
-          ],
           color: appWhite,
-          borderRadius: BorderRadius.circular(5),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
         ),
+        height: containerheight,
         child: SingleChildScrollView(
-          child: Column(children: [
-            SizedBox(
-              height: _height * .013,
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: _width * .05),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    children: [
-                      Text(
-                        "12-05-22",
-                        style: GoogleFonts.openSans(
-                          fontSize: _height * .02,
-                          fontWeight: FontWeight.w600,
+          scrollDirection: Axis.vertical,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+                _width * .06, _height * .037, _width * .06, _height * .037),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Filter Orders",
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600,
+                        fontSize: _height * .0284,
+                        color: appColorPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(
+                  height: _height * .023,
+                ),
+                GestureDetector(
+                  onTap: () {},
+                  child: Container(
+                    decoration: BoxDecoration(
+                        color: inputBackgroundColor,
+                        border: Border.all(
+                            color: inputBorderColor,
+                            width: 1,
+                            style: BorderStyle.solid)),
+                    height: _height * .0533,
+                    width: _width,
+                    child: Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: _width * .04),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Date Created",
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w400,
+                                fontSize: _height * .0166,
+                                color: Color(0xffB1BBC6),
+                              ),
+                            ),
+                            InkWell(
+                              onTap: () {},
+                              child: Icon(
+                                Icons.calendar_month,
+                                color: Color(0xff999999),
+                                size: _height * .025,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
-                  //SizedBox(width: _width * .45),
-                  Text(
-                    "N200,000",
-                    style: GoogleFonts.openSans(
-                      fontSize: _height * .02,
-                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                ],
-              ),
-            ),
-            mypadhh,
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: _width * .05),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  //mypaddingr2,
-                  // Text(
-                  //   "N20,000",
-                  //   style: GoogleFonts.openSans(
-                  //       fontSize: _height * .014,
-                  //       fontWeight: FontWeight.w400,
-                  //       color: Color(0xff00CC08)),
-                  // ),
-                  //SizedBox(width: _width * .54),
-                  Container(
-                    height: _height * .0284,
-                    width: _width * .305,
+                ),
+                SizedBox(
+                  height: _height * .018,
+                ),
+                GestureDetector(
+                  onTap: () {},
+                  child: Container(
                     decoration: BoxDecoration(
-                        color: Color(0xffE4EBF3).withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(5)),
+                        color: inputBackgroundColor,
+                        border: Border.all(
+                            color: inputBorderColor,
+                            width: 1,
+                            style: BorderStyle.solid)),
+                    height: _height * .0533,
+                    width: _width,
+                    child: Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: _width * .04),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Status",
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w400,
+                                fontSize: _height * .0166,
+                                color: Color(0xffB1BBC6),
+                              ),
+                            ),
+                            InkWell(
+                              onTap: () {},
+                              child: Icon(
+                                Icons.arrow_drop_down,
+                                color: Color(0xff999999),
+                                size: _height * .0296,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: _height * .022,
+                ),
+                InkWell(
+                  onTap: () {
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    width: _width,
+                    height: _height * .0633,
+                    decoration: BoxDecoration(
+                      color: appColorPrimary,
+                    ),
                     child: Center(
                         child: Text(
-                      "Pending OTP Validation",
-                      style: GoogleFonts.openSans(
-                          fontSize: _height * .0118,
-                          fontWeight: FontWeight.w400,
-                          color: Color(0xff8D93A1)),
+                      "Set Filter",
+                      style: GoogleFonts.poppins(
+                        color: white,
+                        fontSize: _height * .016,
+                        fontWeight: FontWeight.w500,
+                      ),
                     )),
                   ),
-                  InkWell(
-                    onTap: () {},
-                    child: Image.asset(
-                      "lib/assets/dell.png",
-                      height: _height * .016,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ]),
+          ),
         ),
       ),
     );
   }
 
-  Widget _boxCustom3(BuildContext context) {
-    double _width = MediaQuery.of(context).size.width;
-    double _height = MediaQuery.of(context).size.height;
-    //var mypaddingr2 = SizedBox(width: _width * 0.05);
-    var mypadhh = SizedBox(height: _height * .02);
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => OrderDetails()));
-      },
-      child: Container(
-        width: _width * .92,
-        height: _height * .104,
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurStyle: BlurStyle.outer,
-              blurRadius: 10,
-              spreadRadius: 0,
-              offset: Offset.zero,
-            ),
-          ],
-          color: appWhite,
-          borderRadius: BorderRadius.circular(5),
-        ),
-        child: SingleChildScrollView(
-          child: Column(children: [
-            SizedBox(
-              height: _height * .013,
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: _width * .05),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    children: [
-                      Text(
-                        "12-05-22",
-                        style: GoogleFonts.openSans(
-                          fontSize: _height * .02,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  //SizedBox(width: _width * .45),
-                  Text(
-                    "N200,000",
-                    style: GoogleFonts.openSans(
-                      fontSize: _height * .02,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            mypadhh,
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: _width * .05),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  //mypaddingr2,
-                  // Text(
-                  //   "N20,000",
-                  //   style: GoogleFonts.openSans(
-                  //       fontSize: _height * .014,
-                  //       fontWeight: FontWeight.w400,
-                  //       color: Color(0xff00CC08)),
-                  // ),
-                  //SizedBox(width: _width * .54),
-                  Container(
-                    height: _height * .0284,
-                    width: _width * .305,
-                    decoration: BoxDecoration(
-                        color: Color(0xffE4EBF3).withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(5)),
-                    child: Center(
-                        child: Text(
-                      "Pending OTP Validation",
-                      style: GoogleFonts.openSans(
-                          fontSize: _height * .0118,
-                          fontWeight: FontWeight.w400,
-                          color: Color(0xff8D93A1)),
-                    )),
-                  ),
-                  InkWell(
-                    onTap: () {},
-                    child: Image.asset(
-                      "lib/assets/dell.png",
-                      height: _height * .016,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ]),
-        ),
-      ),
-    );
+  void getDMS() {
+    Provider.of<OrderBloc>(context, listen: false)
+        .getmyDMSOrders(widget.status, widget.sapNumber)
+        .then((value) => _output(value));
   }
 
-  Widget _boxCustom4(BuildContext context) {
-    double _width = MediaQuery.of(context).size.width;
-    double _height = MediaQuery.of(context).size.height;
-    //var mypaddingr2 = SizedBox(width: _width * 0.05);
-    var mypadhh = SizedBox(height: _height * .02);
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => OrderDetails()));
-      },
-      child: Container(
-        width: _width * .92,
-        height: _height * .104,
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurStyle: BlurStyle.outer,
-              blurRadius: 10,
-              spreadRadius: 0,
-              offset: Offset.zero,
-            ),
-          ],
-          color: appWhite,
-          borderRadius: BorderRadius.circular(5),
-        ),
-        child: SingleChildScrollView(
-          child: Column(children: [
-            SizedBox(
-              height: _height * .013,
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: _width * .05),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    children: [
-                      Text(
-                        "12-05-22",
-                        style: GoogleFonts.openSans(
-                          fontSize: _height * .02,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  //SizedBox(width: _width * .45),
-                  Text(
-                    "N200,000",
-                    style: GoogleFonts.openSans(
-                      fontSize: _height * .02,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            mypadhh,
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: _width * .05),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  //mypaddingr2,
-                  // Text(
-                  //   "N20,000",
-                  //   style: GoogleFonts.openSans(
-                  //       fontSize: _height * .014,
-                  //       fontWeight: FontWeight.w400,
-                  //       color: Color(0xff00CC08)),
-                  // ),
-                  //SizedBox(width: _width * .54),
-                  Container(
-                    height: _height * .0284,
-                    width: _width * .305,
-                    decoration: BoxDecoration(
-                        color: Color(0xffE4EBF3).withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(5)),
-                    child: Center(
-                        child: Text(
-                      "Pending OTP Validation",
-                      style: GoogleFonts.openSans(
-                          fontSize: _height * .0118,
-                          fontWeight: FontWeight.w400,
-                          color: Color(0xff8D93A1)),
-                    )),
-                  ),
-                  InkWell(
-                    onTap: () {},
-                    child: Image.asset(
-                      "lib/assets/dell.png",
-                      height: _height * .016,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ]),
-        ),
-      ),
-    );
-  }
-
-  Widget _boxCustom5(BuildContext context) {
-    double _width = MediaQuery.of(context).size.width;
-    double _height = MediaQuery.of(context).size.height;
-    //var mypaddingr2 = SizedBox(width: _width * 0.05);
-    var mypadhh = SizedBox(height: _height * .02);
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => OrderDetails()));
-      },
-      child: Container(
-        width: _width * .92,
-        height: _height * .104,
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurStyle: BlurStyle.outer,
-              blurRadius: 10,
-              spreadRadius: 0,
-              offset: Offset.zero,
-            ),
-          ],
-          color: appWhite,
-          borderRadius: BorderRadius.circular(5),
-        ),
-        child: SingleChildScrollView(
-          child: Column(children: [
-            SizedBox(
-              height: _height * .013,
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: _width * .05),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    children: [
-                      Text(
-                        "12-05-22",
-                        style: GoogleFonts.openSans(
-                          fontSize: _height * .02,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  //SizedBox(width: _width * .45),
-                  Text(
-                    "N200,000",
-                    style: GoogleFonts.openSans(
-                      fontSize: _height * .02,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            mypadhh,
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: _width * .05),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  //mypaddingr2,
-                  // Text(
-                  //   "N20,000",
-                  //   style: GoogleFonts.openSans(
-                  //       fontSize: _height * .014,
-                  //       fontWeight: FontWeight.w400,
-                  //       color: Color(0xff00CC08)),
-                  // ),
-                  //SizedBox(width: _width * .54),
-                  Container(
-                    height: _height * .0284,
-                    width: _width * .305,
-                    decoration: BoxDecoration(
-                        color: Color(0xffE4EBF3).withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(5)),
-                    child: Center(
-                        child: Text(
-                      "Pending OTP Validation",
-                      style: GoogleFonts.openSans(
-                          fontSize: _height * .0118,
-                          fontWeight: FontWeight.w400,
-                          color: Color(0xff8D93A1)),
-                    )),
-                  ),
-                  InkWell(
-                    onTap: () {},
-                    child: Image.asset(
-                      "lib/assets/dell.png",
-                      height: _height * .016,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ]),
-        ),
-      ),
-    );
-  }
-
-  Widget _boxCustom6(BuildContext context) {
-    double _width = MediaQuery.of(context).size.width;
-    double _height = MediaQuery.of(context).size.height;
-    //var mypaddingr2 = SizedBox(width: _width * 0.05);
-    var mypadhh = SizedBox(height: _height * .02);
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-            context, MaterialPageRoute(builder: (context) => OrderDetails()));
-      },
-      child: Container(
-        width: _width * .92,
-        height: _height * .104,
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurStyle: BlurStyle.outer,
-              blurRadius: 10,
-              spreadRadius: 0,
-              offset: Offset.zero,
-            ),
-          ],
-          color: appWhite,
-          borderRadius: BorderRadius.circular(5),
-        ),
-        child: SingleChildScrollView(
-          child: Column(children: [
-            SizedBox(
-              height: _height * .013,
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: _width * .05),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    children: [
-                      Text(
-                        "12-05-22",
-                        style: GoogleFonts.openSans(
-                          fontSize: _height * .02,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  //SizedBox(width: _width * .45),
-                  Text(
-                    "N200,000",
-                    style: GoogleFonts.openSans(
-                      fontSize: _height * .02,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            mypadhh,
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: _width * .05),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  //mypaddingr2,
-                  // Text(
-                  //   "N20,000",
-                  //   style: GoogleFonts.openSans(
-                  //       fontSize: _height * .014,
-                  //       fontWeight: FontWeight.w400,
-                  //       color: Color(0xff00CC08)),
-                  // ),
-                  //SizedBox(width: _width * .54),
-                  Container(
-                    height: _height * .0284,
-                    width: _width * .305,
-                    decoration: BoxDecoration(
-                        color: Color(0xffE4EBF3).withOpacity(0.5),
-                        borderRadius: BorderRadius.circular(5)),
-                    child: Center(
-                        child: Text(
-                      "Pending OTP Validation",
-                      style: GoogleFonts.openSans(
-                          fontSize: _height * .0118,
-                          fontWeight: FontWeight.w400,
-                          color: Color(0xff8D93A1)),
-                    )),
-                  ),
-                  InkWell(
-                    onTap: () {},
-                    child: Image.asset(
-                      "lib/assets/dell.png",
-                      height: _height * .016,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ]),
-        ),
-      ),
-    );
+  _output(String dmsList) {
+    List empty = [];
+    var bodyT = jsonDecode(dmsList);
+    if (dmsList.contains("data")) {
+      if (bodyT["status"] == "Successful") {
+        if (bodyT["data"]["dmsOrders"] != empty) {
+          Provider.of<OrderBloc>(context, listen: false).isLoading = false;
+          dynamic _gettX = bodyT;
+          List myList = _gettX["data"]["dmsOrders"];
+          if (myList.isEmpty) {
+            emptyList = true;
+            toast("Oops.No Orders");
+          }
+          setState(() {
+            _dmsData =
+                myList.map<DmsOrder>((e) => DmsOrder.fromJson(e)).toList();
+            print(bodyT["message"]);
+          });
+        } else {
+          toast(bodyT["message"]);
+        }
+      }
+    }
   }
 }

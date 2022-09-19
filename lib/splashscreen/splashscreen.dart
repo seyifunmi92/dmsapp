@@ -2,12 +2,11 @@ import 'dart:async';
 import 'package:dms/blocs/login_bloc.dart';
 import 'package:dms/screens/auth/login_screen.dart';
 import 'package:dms/screens/dashboard/dashboard.dart';
-import 'package:dms/screens/onboarding/onboarding1.dart';
 import 'package:dms/utils/next_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:nb_utils/nb_utils.dart';
 import 'package:provider/provider.dart';
 
+import '../screens/onboarding/newonboard.dart';
 import '../utils/images.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -28,7 +27,7 @@ class _SplashScreenState extends State<SplashScreen> {
     final LogInBloc lb = context.read<LogInBloc>();
     lb.checkOnboardingRead();
     Future.delayed(Duration(milliseconds: 500)).then((value) {
-      lb.isOnboardingRead == true ? nextScreenReplace(context, LoginScreen()) : nextScreenReplaceWithTransition(context, Onboarding());
+      lb.isOnboardingRead == true ? nextScreenReplace(context, LoginScreen()) : nextScreenReplaceWithTransition(context, NewOnboard());
     });
   }
 

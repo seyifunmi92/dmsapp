@@ -162,6 +162,42 @@ Future<Response> getRequestWithToken(String endPoint) async {
   }
 }
 
+
+Future<Response> putRequestWithToken(String endPoint, body) async {
+
+  String _token = await getUserToken();
+
+  Map<String, String> headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+    "Authorization": "Bearer $_token",
+  };
+
+  try {
+    if (!await isNetworkAvailable()) throw noInternetMsg;
+
+    // String url = "$baseURL$endPoint";
+    Uri url = buildBaseUrl(endPoint);
+
+    print('URL: $url');
+    print('Request: $body');
+
+    Response response = await put(url, body: jsonEncode(body), headers:headers).timeout(Duration(seconds: timeoutDuration), onTimeout: (() => throw "Please try again"));
+
+    print('Status: ${response.statusCode} $url $body');
+    print(response.body);
+    return response;
+  } catch (e) {
+    print(e);
+    if (!await isNetworkAvailable()) {
+      throw noInternetMsg;
+    } else {
+      throw "Please try again";
+    }
+  }
+}
+
+
 Future handleResponse(Response response) async {
   if (response.statusCode.isSuccessful()) {
     // Map<String, dynamic> userdata = Map<String, dynamic>.from(json.decode(response.body));

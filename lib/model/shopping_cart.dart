@@ -1,12 +1,88 @@
-class CartItem {
+class ShoppingCarts {
+  int? shoppingCartId;
+  int? userId;
+  int? createdByUserId;
+  String? dateCreated;
+  int? modifiedByUserId;
+  ShoppingCartStatus? shoppingCartStatus;
+  String? dateModified;
+  List<ShoppingCartItems>? shoppingCartItems;
+
+  ShoppingCarts(
+      {this.shoppingCartId,
+        this.userId,
+        this.createdByUserId,
+        this.dateCreated,
+        this.modifiedByUserId,
+        this.shoppingCartStatus,
+        this.dateModified,
+        this.shoppingCartItems});
+
+  ShoppingCarts.fromJson(Map<String, dynamic> json) {
+    shoppingCartId = json['shoppingCartId'];
+    userId = json['userId'];
+    createdByUserId = json['createdByUserId'];
+    dateCreated = json['dateCreated'];
+    modifiedByUserId = json['modifiedByUserId'];
+    shoppingCartStatus = json['shoppingCartStatus'] != null
+        ? new ShoppingCartStatus.fromJson(json['shoppingCartStatus'])
+        : null;
+    dateModified = json['dateModified'];
+    if (json['shoppingCartItems'] != null) {
+      shoppingCartItems = <ShoppingCartItems>[];
+      json['shoppingCartItems'].forEach((v) {
+        shoppingCartItems!.add(new ShoppingCartItems.fromJson(v));
+      });
+    }
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['shoppingCartId'] = this.shoppingCartId;
+    data['userId'] = this.userId;
+    data['createdByUserId'] = this.createdByUserId;
+    data['dateCreated'] = this.dateCreated;
+    data['modifiedByUserId'] = this.modifiedByUserId;
+    if (this.shoppingCartStatus != null) {
+      data['shoppingCartStatus'] = this.shoppingCartStatus!.toJson();
+    }
+    data['dateModified'] = this.dateModified;
+    if (this.shoppingCartItems != null) {
+      data['shoppingCartItems'] =
+          this.shoppingCartItems!.map((v) => v.toJson()).toList();
+    }
+    return data;
+  }
+}
+
+class ShoppingCartStatus {
+  String? code;
+  String? name;
+
+  ShoppingCartStatus({this.code, this.name});
+
+  ShoppingCartStatus.fromJson(Map<String, dynamic> json) {
+    code = json['code'];
+    name = json['name'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['code'] = this.code;
+    data['name'] = this.name;
+    return data;
+  }
+}
+
+class ShoppingCartItems {
   int? shoppingCartItemId;
   String? dateCreated;
-  double? quantity;
+  int? quantity;
   String? unitOfMeasureCode;
   Product? product;
   DistributorSapAccount? distributorSapAccount;
 
-  CartItem(
+  ShoppingCartItems(
       {this.shoppingCartItemId,
         this.dateCreated,
         this.quantity,
@@ -14,7 +90,7 @@ class CartItem {
         this.product,
         this.distributorSapAccount});
 
-  CartItem.fromJson(Map<String, dynamic> json) {
+  ShoppingCartItems.fromJson(Map<String, dynamic> json) {
     shoppingCartItemId = json['shoppingCartItemId'];
     dateCreated = json['dateCreated'];
     quantity = json['quantity'];

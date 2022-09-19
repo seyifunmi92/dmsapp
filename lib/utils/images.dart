@@ -1,5 +1,5 @@
 
-const splash_bg = "assets/images/splash1.png";
+const splash_bg = "assets/images/splash.png";
 const personIcon = "assets/icons/Profile.png";
 const supportIcon = "assets/icons/support.png";
 const orderIcon = "assets/icons/orders.png";

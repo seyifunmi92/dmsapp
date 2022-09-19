@@ -18,6 +18,8 @@ class CartBloc extends ChangeNotifier{
   double _totalPrice = 0.0;
   double get totalPrice => _totalPrice;
 
+  String _cartBaseUrl = "https://dms-order-ms.azurewebsites.net/api";
+  String get cartBaseUrl => _cartBaseUrl;
   // List<CartItem> cart = [];
 
   String selectedAccount = "Select Account";
@@ -39,7 +41,7 @@ class CartBloc extends ChangeNotifier{
     //   _companylist = value
     //       .map<DmsCompany>((element) => DmsCompany.fromJson(element)).toList(),
     // });
-    await getRequestWithToken('/sapaccount?CountryCode=ng&CompanyCode=dsr').then((value) {
+    await getRequestWithToken('/sapaccount').then((value) {
       print(value);
       if (value.statusCode.isSuccessful()) {
         var data = jsonDecode(value.body);

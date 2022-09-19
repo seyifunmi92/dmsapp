@@ -1,5 +1,9 @@
+import 'dart:convert';
+
 import 'package:dms/constant.dart';
 import 'package:dms/layout/appWidget.dart';
+import 'package:dms/layout/loading_indicator_widget.dart';
+import 'package:dms/model/ordermodels.dart';
 import 'package:dms/screens/accounts/accountdelete.dart';
 import 'package:dms/screens/auth/confirm_otp.dart';
 import 'package:dms/screens/auth/login_screen.dart';
@@ -13,6 +17,7 @@ import 'package:dms/screens/my%20orders/orderhistory.dart';
 import 'package:dms/screens/my%20orders/orderitems.dart';
 import 'package:dms/screens/my_atc/my_atc_detail.dart';
 import 'package:dms/screens/my_atc/myatcc.dart';
+import 'package:dms/services/orderservices.dart';
 import 'package:dms/splashscreen/splashscreen.dart';
 import 'package:dms/screens/support/new_support_request.dart';
 import 'package:dms/utils/colors.dart';
@@ -21,53 +26,58 @@ import 'package:dotted_line/dotted_line.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:nb_utils/nb_utils.dart';
+import 'package:provider/provider.dart';
 
 class OrderDetails extends StatefulWidget {
-  const OrderDetails({Key? key}) : super(key: key);
+  int orderId;
+  OrderDetails(this.orderId);
 
   @override
   _OrderDetailsState createState() => _OrderDetailsState();
 }
 
 class _OrderDetailsState extends State<OrderDetails> {
+  final _format = NumberFormat("#,###,000.00");
+  List<OrderItem9>? _itemDms;
+  DmsOrder9? _itemOrder;
+  GetSapOrderDetails? _getsapdetails;
+  @override
+  void initState() {
+    _orderDetails(widget.orderId);
+    Provider.of<OrderBloc>(context, listen: false).isLoading = true;
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
-    double _width = MediaQuery.of(context).size.width;
     double _height = MediaQuery.of(context).size.height;
-    return Scaffold(
-      backgroundColor: appWhite,
-      appBar: dmsAppBar(context, "", actions: [
-        TextButton(
-          onPressed: () {
-            // Navigator.push(
-            //     context,
-            //     MaterialPageRoute(
-            //         builder: (context) => SaveOrderSuccessScreen()));
-          },
-          child: Row(
-            children: [
-              // Icon(
-              //   Icons.save,
-              //   size: _height * .024,
-              // ),
-              // SizedBox(
-              //   width: _width * 0.01,
-              // ),
-              Text(
-                "Download Receipt",
-                style: GoogleFonts.poppins(
-                  color: appColorPrimary,
-                  fontWeight: FontWeight.w500,
-                  fontSize: _height * .012,
+    return Provider.of<OrderBloc>(context, listen: false).isLoading
+        ? Scaffold(
+            body: Center(child: LoadingIndicatorWidget()),
+          )
+        : Scaffold(
+            backgroundColor: appWhite,
+            appBar: dmsAppBar(context, "", actions: [
+              TextButton(
+                onPressed: () {},
+                child: Row(
+                  children: [
+                    Text(
+                      "Download Receipt",
+                      style: GoogleFonts.poppins(
+                        color: appColorPrimary,
+                        fontWeight: FontWeight.w500,
+                        fontSize: _height * .012,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
-      ]),
-      body: _body(context),
-    );
+            ]),
+            body: _body(context),
+          );
   }
 
   Widget _body(BuildContext context) {
@@ -76,7 +86,6 @@ class _OrderDetailsState extends State<OrderDetails> {
     var contHeight = MediaQuery.of(context).size.height * .71;
     var mypadr = SizedBox(width: _width * .04);
     var mypadh = SizedBox(height: _height * .008);
-
     return SingleChildScrollView(
       scrollDirection: Axis.vertical,
       child: Column(
@@ -90,9 +99,6 @@ class _OrderDetailsState extends State<OrderDetails> {
                 ),
                 Row(
                   children: [
-                    // SizedBox(
-                    //   height: _height * 0.026,
-                    // ),
                     Text(
                       "Order Details",
                       style: GoogleFonts.poppins(
@@ -106,9 +112,6 @@ class _OrderDetailsState extends State<OrderDetails> {
               ],
             ),
           ),
-          // SizedBox(
-          //   height: _height * .02,
-          // ),
           mypadh,
           Row(
             children: [
@@ -126,16 +129,11 @@ class _OrderDetailsState extends State<OrderDetails> {
                       offset: Offset.zero,
                     ),
                   ],
-                  //border: Border.all(color: Color(0xffB1BBC6)),
                   color: Colors.white,
                 ),
                 child: SingleChildScrollView(
                   child: Column(children: [
-                    SizedBox(
-                      height: _height * .02,
-                    ),
-                    //mypadh,
-                    //mypadh,
+                    SizedBox(height: _height * .02),
                     Row(
                       children: [
                         mypadr,
@@ -149,105 +147,15 @@ class _OrderDetailsState extends State<OrderDetails> {
                         ),
                       ],
                     ),
-                    SizedBox(
-                      height: _height * .006,
-                    ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: _width * .04),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          //mypadr,
-                          Text(
-                            "Bag of Cements",
-                            style: GoogleFonts.poppins(
-                              decoration: TextDecoration.underline,
-                              fontWeight: FontWeight.w500,
-                              fontSize: _height * .02,
-                              color: Color(0xff100C57),
-                            ),
-                          ),
-                          Text(
-                            "1",
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w300,
-                              fontSize: _height * .02,
-                              color: Color(0xff7A7C85),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    SizedBox(height: _height * .006),
+                    ..._itemDms!.map((e) => itemsCustom(e)),
                     SizedBox(height: contHeight * .005),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: _width * .04),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          //mypadr,
-                          Text(
-                            "Bag of Cements",
-                            style: GoogleFonts.poppins(
-                              decoration: TextDecoration.underline,
-                              fontWeight: FontWeight.w500,
-                              fontSize: _height * .02,
-                              color: Color(0xff100C57),
-                            ),
-                          ),
-                          Text(
-                            "1",
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w300,
-                              fontSize: _height * .02,
-                              color: Color(0xff7A7C85),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: _height * .004),
-
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: _width * .04),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          //mypadr,
-                          Text(
-                            "Bag of Cements",
-                            style: GoogleFonts.poppins(
-                              decoration: TextDecoration.underline,
-                              fontWeight: FontWeight.w500,
-                              fontSize: _height * .02,
-                              color: Color(0xff100C57),
-                            ),
-                          ),
-                          Text(
-                            "1",
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w300,
-                              fontSize: _height * .02,
-                              color: Color(0xff7A7C85),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(
-                      height: _height * 0.03,
-                    ),
-                    // mypadh,
-                    // mypadh,
-
+                    SizedBox(height: _height * 0.03),
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: _width * .05),
                       child: DottedLine(
                         dashColor: Color(0xffcbcbcb).withOpacity(0.6),
                       ),
-                      // Divider(
-                      //   height: _height * .019,
-                      //   color: Color(0xffCBCBCB),
-                      // ),
                     ),
                     SizedBox(
                       height: _height * .02,
@@ -265,9 +173,6 @@ class _OrderDetailsState extends State<OrderDetails> {
                               fontSize: _height * .02,
                             ),
                           ),
-                          // SizedBox(
-                          //   width: _width * .31,
-                          // ),
                           Text(
                             "Product Quantity",
                             style: GoogleFonts.poppins(
@@ -289,18 +194,15 @@ class _OrderDetailsState extends State<OrderDetails> {
                         children: [
                           //mypadr,
                           Text(
-                            "OR1234",
+                            "OR${_itemOrder!.id}",
                             style: GoogleFonts.poppins(
                               fontWeight: FontWeight.w300,
                               color: Color(0xff333542),
                               fontSize: _height * .016,
                             ),
                           ),
-                          // SizedBox(
-                          //   width: _width * .67,
-                          // ),
                           Text(
-                            "3",
+                            _itemOrder!.orderItems![0].quantity.toString(),
                             style: GoogleFonts.poppins(
                               fontWeight: FontWeight.w300,
                               color: Color(0xff333542),
@@ -313,19 +215,11 @@ class _OrderDetailsState extends State<OrderDetails> {
                     SizedBox(
                       height: _height * .02,
                     ),
-                    //mypadh,
-                    // SizedBox(
-                    //   height: _height * .019,
-                    // ),
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: _width * .05),
                       child: DottedLine(
                         dashColor: Color(0xffcbcbcb).withOpacity(0.6),
                       ),
-                      // Divider(
-                      //   height: _height * .019,
-                      //   color: Color(0xffCBCBCB),
-                      // ),
                     ),
                     SizedBox(
                       height: _height * .02,
@@ -343,9 +237,6 @@ class _OrderDetailsState extends State<OrderDetails> {
                               fontSize: _height * .02,
                             ),
                           ),
-                          // SizedBox(
-                          //   width: _width * .31,
-                          // ),
                           Text(
                             "Order Reason",
                             style: GoogleFonts.poppins(
@@ -365,18 +256,18 @@ class _OrderDetailsState extends State<OrderDetails> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          //mypadr,
                           Text(
-                            "27/5/2022",
+                            _itemOrder!.deliveryDate!.day.toString() +
+                                "-" +
+                                _itemOrder!.deliveryDate!.month.toString() +
+                                "-" +
+                                _itemOrder!.deliveryDate!.year.toString(),
                             style: GoogleFonts.poppins(
                               fontWeight: FontWeight.w300,
                               color: Color(0xff333542),
                               fontSize: _height * .016,
                             ),
                           ),
-                          // SizedBox(
-                          //   width: _width * .67,
-                          // ),
                           Text(
                             "Sales",
                             style: GoogleFonts.poppins(
@@ -388,7 +279,7 @@ class _OrderDetailsState extends State<OrderDetails> {
                         ],
                       ),
                     ),
-                    //mypadh,
+
                     SizedBox(
                       height: _height * .025,
                     ),
@@ -397,11 +288,6 @@ class _OrderDetailsState extends State<OrderDetails> {
                       child: DottedLine(
                         dashColor: Color(0xffcbcbcb).withOpacity(0.6),
                       ),
-
-                      // Divider(
-                      //   height: _height * .019,
-                      //   color: Color(0xffCBCBCB),
-                      // ),
                     ),
                     SizedBox(
                       height: _height * .014,
@@ -420,9 +306,7 @@ class _OrderDetailsState extends State<OrderDetails> {
                               fontSize: _height * .02,
                             ),
                           ),
-                          // SizedBox(
-                          //   width: _width * .67,
-                          // ),
+
                           Text(
                             "",
                             style: GoogleFonts.poppins(
@@ -442,18 +326,14 @@ class _OrderDetailsState extends State<OrderDetails> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          //mypadr,
                           Text(
-                            "Pending",
+                            _itemOrder!.orderStatus!.code.toString(),
                             style: GoogleFonts.poppins(
                               fontWeight: FontWeight.w300,
                               color: Color(0xff333542),
                               fontSize: _height * .016,
                             ),
                           ),
-                          // SizedBox(
-                          //   width: _width * .67,
-                          // ),
                           Text(
                             "",
                             style: GoogleFonts.poppins(
@@ -513,7 +393,7 @@ class _OrderDetailsState extends State<OrderDetails> {
                       children: [
                         mypadr,
                         Text(
-                          "Garwood Court, Ikorodu Road",
+                          _itemOrder!.deliveryAddress.toString(),
                           style: GoogleFonts.poppins(
                             fontWeight: FontWeight.w400,
                             color: Color(0xff7A7C85),
@@ -529,7 +409,7 @@ class _OrderDetailsState extends State<OrderDetails> {
                       children: [
                         mypadr,
                         Text(
-                          "Phase 2 Lagos, NIgeria",
+                          "",
                           style: GoogleFonts.poppins(
                             fontWeight: FontWeight.w400,
                             color: Color(0xff7A7C85),
@@ -567,11 +447,11 @@ class _OrderDetailsState extends State<OrderDetails> {
                               fontSize: _height * .02,
                             ),
                           ),
-                          // SizedBox(
-                          //   width: _width * .67,
-                          // ),
+
                           Text(
-                            "N20,000",
+                            _itemOrder!.estimatedNetValue != 0.00
+                                ? "\₦${_format.format(_itemOrder!.estimatedNetValue)}"
+                                : "\₦0.00",
                             style: GoogleFonts.poppins(
                               fontWeight: FontWeight.w700,
                               color: Color(0xff27AE60),
@@ -627,11 +507,6 @@ class _OrderDetailsState extends State<OrderDetails> {
                       context,
                       MaterialPageRoute(
                           builder: ((context) => OrderHistory())));
-                  // showDialog(
-                  //     context: context,
-                  //     builder: (BuildContext context) {
-                  //       return _myDialog(context);
-                  //     });
                 },
                 child: Center(
                   child: Container(
@@ -663,5 +538,100 @@ class _OrderDetailsState extends State<OrderDetails> {
         ],
       ),
     );
+  }
+
+  Widget itemsCustom(OrderItem9 _order) {
+    var _productQty = _order.product!.name!.length;
+    print(_productQty);
+    double _height = MediaQuery.of(context).size.height;
+    double _width = MediaQuery.of(context).size.width;
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: _width * .04),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            _order.product!.name!,
+            style: GoogleFonts.poppins(
+              decoration: TextDecoration.underline,
+              fontWeight: FontWeight.w500,
+              fontSize: _height * .02,
+              color: Color(0xff100C57),
+            ),
+          ),
+          Text(
+            _order.quantity.toString(),
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w300,
+              fontSize: _height * .02,
+              color: Color(0xff7A7C85),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _orderDetails(int orderId) {
+    Provider.of<OrderBloc>(context, listen: false)
+        .getDMSOrderdetails(widget.orderId)
+        .then((value) => _output(value));
+  }
+
+  _output(String _orderD) {
+    print("Lets get dms order details now");
+    var dataT = jsonDecode(_orderD);
+    if (_orderD.contains("data")) {
+      if (dataT["status"] == "Successful") {
+        var mData = dataT["data"]["dmsOrder"];
+        var myD2 = dataT["data"]["dmsOrder"]["orderItems"];
+        List _listyy = myD2;
+        Provider.of<OrderBloc>(context, listen: false).isLoading = false;
+        setState(() {
+          _itemDms =
+              _listyy.map<OrderItem9>((e) => OrderItem9.fromJson(e)).toList();
+          _itemOrder = DmsOrder9.fromJson(mData);
+          print(_itemOrder!.isAtc);
+          print(_itemDms![0].product!.price);
+        });
+      } else if (dataT["responseCode" == 401]) {
+        Provider.of<OrderBloc>(context, listen: false).isLoading = false;
+        toast("Unauthorized Request");
+      } else if (dataT["responseCode" == 404]) {
+        Provider.of<OrderBloc>(context, listen: false).isLoading = false;
+        toast("Not Found");
+      } else {
+        setState(() {
+          //_getorderdetails = GetDmsOrderDetails.fromJson(dataT);
+        });
+        //toast(_getorderdetails!.message);
+      }
+    }
+  }
+
+  _sapOutput(String sapDetails) {
+    print("Lets get SAP order details now");
+    var dataT2 = jsonDecode(sapDetails);
+    print(dataT2.runtimeType);
+    if (sapDetails.contains("data")) {
+      print(sapDetails.runtimeType);
+      if (dataT2["responseCode"] == 200) {
+        Provider.of<OrderBloc>(context, listen: false).isLoading = false;
+        setState(() {
+          _getsapdetails = GetSapOrderDetails.fromJson(dataT2);
+        });
+      } else if (dataT2["responseCode" == 401]) {
+        Provider.of<OrderBloc>(context, listen: false).isLoading = false;
+        toast("Unauthorized Request");
+      } else if (dataT2["responseCode" == 404]) {
+        Provider.of<OrderBloc>(context, listen: false).isLoading = false;
+        toast("Not Found");
+      } else {
+        setState(() {
+          _getsapdetails = GetSapOrderDetails.fromJson(dataT2);
+        });
+        toast(_getsapdetails!.message);
+      }
+    }
   }
 }

@@ -5,11 +5,13 @@ import 'package:dms/blocs/country_bloc.dart';
 import 'package:dms/blocs/login_bloc.dart';
 import 'package:dms/blocs/product_bloc.dart';
 import 'package:dms/constant.dart';
+import 'package:dms/services/orderservices.dart';
 import 'package:dms/splashscreen/splashscreen.dart';
 import 'package:dms/utils/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'blocs/cart_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,10 +47,17 @@ class _DmsAppRootState extends State<DmsAppRoot> {
         builder: (_, ThemeMode currentMode, __) {
           return MultiProvider(
             providers: [
-              ChangeNotifierProvider<LogInBloc>(create: (context) => LogInBloc()),
-              ChangeNotifierProvider<CountryBloc>(create: (context) => CountryBloc()),
-              ChangeNotifierProvider<CompanyBloc>(create: (context) => CompanyBloc()),
-              ChangeNotifierProvider<ProductBloc>(create: (context) => ProductBloc()),
+              ChangeNotifierProvider<LogInBloc>(
+                  create: (context) => LogInBloc()),
+              ChangeNotifierProvider<CountryBloc>(
+                  create: (context) => CountryBloc()),
+              ChangeNotifierProvider<CompanyBloc>(
+                  create: (context) => CompanyBloc()),
+              ChangeNotifierProvider<ProductBloc>(
+                  create: (context) => ProductBloc()),
+              ChangeNotifierProvider<OrderBloc>(
+                  create: (context) => OrderBloc()),
+              ChangeNotifierProvider<CartBloc>(create: (context) => CartBloc()),
             ],
             child: MaterialApp(
               // Remove the debug banner
@@ -72,7 +81,6 @@ class _DmsAppRootState extends State<DmsAppRoot> {
   void setSelected(int index) {
     _selectedDrawerItem = index;
   }
-
 }
 
 // class FindHomeScreen extends StatefulWidget {

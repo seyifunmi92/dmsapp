@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:loading_indicator/loading_indicator.dart';
 
 class LoadingIndicatorWidget extends StatelessWidget {
+
   const LoadingIndicatorWidget({
     Key? key,
   }) : super(key: key);

@@ -261,7 +261,7 @@ class _ProductsState extends State<Products> {
                                     mypadh,
                                     Text(
                                       // "N${_productList.amount}",
-                                      "₦24,800",
+                                      "\N24,800",
                                       style: GoogleFonts.openSans(
                                         fontWeight: FontWeight.w700,
                                         fontSize: _screenHeight * .015,

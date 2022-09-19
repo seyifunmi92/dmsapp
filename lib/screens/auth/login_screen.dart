@@ -53,7 +53,13 @@ class _LoginScreenState extends State<LoginScreen> {
       deviceID = lb.deviceID;
       ipAddress = lb.ipAddress;
 
-      Map req = {"userName": userNameCont.text, "password": passwordCont.text, "channelCode": "Mobile", "deviceId": deviceID, "ipAddress": ipAddress};
+      Map req = {
+        "userName": userNameCont.text,
+        "password": passwordCont.text,
+        "channelCode": "Mobile",
+        "deviceId": deviceID,
+        "ipAddress": ipAddress
+      };
 
       await postRequest('/login', req).then((value) {
         print(value);
@@ -61,6 +67,8 @@ class _LoginScreenState extends State<LoginScreen> {
           var data = jsonDecode(value.body);
           print(data);
           lb.saveLoggedInToken(data['data']['bearerToken']);
+          lb.getuserData(data["data"]["user"]["firstName"]);
+          lb.getuserData2(data["data"]["user"]["lastName"]);
           lb.setSignIn();
           toast(data['message']);
           setState(() {
@@ -68,7 +76,6 @@ class _LoginScreenState extends State<LoginScreen> {
           });
 
           nextScreenCloseOthers(context, DashBoard());
-
         } else {
           if (value.body.isJson()) {
             var data = jsonDecode(value.body);
@@ -81,10 +88,10 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       }).catchError((e) {
         isLoading = false;
-        toast("We are unable to complete your request at this time", length: Toast.LENGTH_LONG);
+        toast("We are unable to complete your request at this time",
+            length: Toast.LENGTH_LONG);
         print(e.toString());
         setState(() {});
-
       });
     } else {
       isLoading = false;
@@ -106,7 +113,6 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final _screenWidth = MediaQuery.of(context).size.width;
     final _screenHeight = MediaQuery.of(context).size.height;
-
 
     return WillPopScope(
       onWillPop: () async {
@@ -204,9 +210,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.next,
                             autofocus: false,
-                            textCapitalization: TextCapitalization.words,
-                            onFieldSubmitted: (s) =>
-                                FocusScope.of(context).requestFocus(passwordNode),
+                            //textCapitalization: TextCapitalization.words,
+                            onFieldSubmitted: (s) => FocusScope.of(context)
+                                .requestFocus(passwordNode),
                             validator: (s) {
                               if (s!.isEmpty) return 'Username is required';
                               return null;
@@ -303,8 +309,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             textInputAction: TextInputAction.next,
                             autofocus: false,
                             textCapitalization: TextCapitalization.words,
-                            onFieldSubmitted: (s) =>
-                                FocusScope.of(context).requestFocus(passwordNode),
+                            onFieldSubmitted: (s) => FocusScope.of(context)
+                                .requestFocus(passwordNode),
                             focusNode: passwordNode,
                             validator: (s) {
                               if (s!.isEmpty) return 'Password is required';

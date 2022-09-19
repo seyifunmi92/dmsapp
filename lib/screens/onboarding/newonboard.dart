@@ -4,7 +4,11 @@ import 'package:dms/screens/profile/myprofile.dart';
 import 'package:dms/utils/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+
+import '../../blocs/login_bloc.dart';
+import '../../utils/next_screen.dart';
 
 class NewOnboard extends StatefulWidget {
   const NewOnboard({Key? key}) : super(key: key);
@@ -246,10 +250,13 @@ class _NewOnboardState extends State<NewOnboard> {
                         counter++;
                       });
                       if (counter == 4) {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => LoginScreen()));
+                        // Navigator.push(
+                        //     context,
+                        //     MaterialPageRoute(
+                        //         builder: (context) => LoginScreen()));
+                        final LogInBloc lb = Provider.of<LogInBloc>(context, listen: false);
+                        lb.setOnboarding();
+                        nextScreenReplace(context, LoginScreen());
                       } else {
                         _showNext();
                       }
@@ -270,10 +277,13 @@ class _NewOnboardState extends State<NewOnboard> {
               ),
               InkWell(
                 onTap: () {
-                  Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const LoginScreen()));
+                  // Navigator.push(
+                  //     context,
+                  //     MaterialPageRoute(
+                  //         builder: (context) => const LoginScreen()));
+                  final LogInBloc lb = Provider.of<LogInBloc>(context, listen: false);
+                  lb.setOnboarding();
+                  nextScreenReplace(context, LoginScreen());
                 },
                 child: Text(
                   "Skip",

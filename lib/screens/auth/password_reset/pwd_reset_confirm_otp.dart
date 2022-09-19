@@ -262,7 +262,7 @@ class _PwdResetConfirmOTPState extends State<PwdResetConfirmOTP> {
     otpID = lb.otpID!;
     isLoading = true;
     setState(() {});
-    Map req = {"otpId": otpID};
+    Map req = {"otpDisplayId": otpID};
 
     await postRequest('/otp/resend', req).then((value) {
       if (value.statusCode.isSuccessful()) {
