@@ -790,10 +790,10 @@ class _ATCTrackDeliveryState extends State<ATCTrackDelivery> {
                   //mypadr,
                   InkWell(
                     onTap: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => ScheduleDelivery()));
+                      // Navigator.push(
+                      //     context,
+                      //     MaterialPageRoute(
+                      //         builder: (context) => ScheduleDelivery()));
                     },
                     child: Container(
                       width: _width * .92,

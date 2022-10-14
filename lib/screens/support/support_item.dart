@@ -67,37 +67,6 @@ class _SupportItemState extends State<SupportItem> {
                     padding: const EdgeInsets.only(bottom: 12.0),
                     child: Column(
                       children: [
-                        // Container(
-                        //   // color: Colors.white70,
-                        //   alignment: Alignment.center,
-                        //   width: double.infinity,
-                        //   decoration: BoxDecoration(
-                        //     // borderRadius: BorderRadius.circular(10),
-                        //     color: appColorPrimaryLight,
-                        //     // boxShadow: [
-                        //     //   BoxShadow(
-                        //     //     color: Color.fromRGBO(0, 0, 0, _opacity),
-                        //     //     offset: Offset(_xOffset, _yOffset),
-                        //     //     blurRadius: _blurRadius,
-                        //     //     spreadRadius: _spreadRadius,
-                        //     //   )
-                        //     // ],
-                        //   ),
-                        //   child: Center(
-                        //     child: ListTile(
-                        //       // tileColor: Colors.white,
-                        //       leading: text("View Contact Details",
-                        //           isBoldText: true),
-                        //       selectedTileColor: Theme.of(context).primaryColor,
-                        //       selectedColor: Theme.of(context).dividerColor,
-                        //       // minLeadingWidth: double.maxFinite,
-                        //       trailing: Image.asset(
-                        //         personIcon,
-                        //         height: _screenHeight * 0.035,
-                        //       ),
-                        //     ),
-                        //   ),
-                        // ),
                         GestureDetector(
                           onTap: () {
                             Navigator.push(context,

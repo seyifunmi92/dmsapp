@@ -1,33 +1,27 @@
 import 'dart:convert';
 
-import 'package:dms/blocs/counter.dart';
-import 'package:dms/blocs/counterbloc.dart';
 import 'package:dms/layout/appWidget.dart';
-import 'package:dms/screens/carts/carts.dart';
 
 import 'package:dms/utils/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:loading_indicator/loading_indicator.dart';
+import 'package:modal_progress_hud_alt/modal_progress_hud_alt.dart';
 import 'package:nb_utils/nb_utils.dart';
 import 'package:provider/provider.dart';
 
 import '../../blocs/cart_bloc.dart';
+import '../../blocs/product_bloc.dart';
 import '../../layout/account_picker.dart';
 import '../../layout/loading_indicator_widget.dart';
+import '../../model/product_item.dart';
 import '../../network/network_utils.dart';
+import '../../utils/cart_animate.dart';
 
 class ProductDetails extends StatefulWidget {
   int productId;
-  String imageUrl;
-  String productName;
-  String title;
-  String sapID;
-  String productDetails;
-  int amount;
-  ProductDetails(this.productId, this.imageUrl, this.productName, this.title, this.sapID,
-      this.productDetails, this.amount);
+
+  ProductDetails(this.productId);
   @override
   _ProductDetailsState createState() => _ProductDetailsState();
 }
@@ -43,6 +37,7 @@ class _ProductDetailsState extends State<ProductDetails> {
   int distributorSapAccountId = 0;
   int quantity = 1;
   bool isLoading = false;
+  ProductItem? product;
 
   void _decreaseQuantity() {
     setState(() {
@@ -53,26 +48,33 @@ class _ProductDetailsState extends State<ProductDetails> {
 
   @override
   void initState() {
-
+    loadProductsItem();
     // TODO: implement initState
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: dmsAppBarwithCart(context, ""),
-      body: Center(
-        child: Container(
-            height: MediaQuery.of(context).size.height * .3,
-            width: MediaQuery.of(context).size.width * .432,
-            child: Image.asset(
-              widget.imageUrl,
-              fit: BoxFit.fill,
-            )),
+    return ModalProgressHUD(
+      inAsyncCall: isLoading,
+      progressIndicator: CartAnimate(),
+      child: Scaffold(
+        backgroundColor: Colors.grey[100],
+        appBar: dmsAppBarwithCart(context, ""),
+        body: product != null ? Center(
+          child: Container(
+              height: MediaQuery.of(context).size.height * .3,
+              width: MediaQuery.of(context).size.width * .432,
+              child: product!.product!.productImages!.isNotEmpty ? Image.network(
+                product!.product!.productImages![0].publicUrl!,
+                fit: BoxFit.fill,
+              ) : Image.asset(
+                "lib/assets/dangotebig.png",
+                fit: BoxFit.fill,
+              )),
+        ) : LinearProgressIndicator(),
+        bottomNavigationBar:product != null ? _bottomBar(context) : Container(),
       ),
-      bottomNavigationBar: _bottomBar(context),
     );
   }
 
@@ -100,7 +102,7 @@ class _ProductDetailsState extends State<ProductDetails> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                widget.productName,
+                product!.product!.name!,
                 style: GoogleFonts.openSans(
                   fontSize: _height * .024,
                   fontWeight: FontWeight.w700,
@@ -113,13 +115,19 @@ class _ProductDetailsState extends State<ProductDetails> {
             ],
           ),
         ),
-        Text(
-          "N${formatter.format(widget.amount)}.00",
-          style: GoogleFonts.openSans(
-            fontSize: _height * .024,
-            fontWeight: FontWeight.w700,
-            color: Color(0xff27AE60),
-            letterSpacing: 0.04,
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: _width * .08),
+          child: Align(
+            alignment: Alignment.bottomLeft,
+            child: Text(
+              "N${formatter.format(product!.product!.price!)}",
+              style: GoogleFonts.openSans(
+                fontSize: _height * .024,
+                fontWeight: FontWeight.w700,
+                color: Color(0xff27AE60),
+                letterSpacing: 0.04,
+              ),
+            ),
           ),
         ),
         SizedBox(
@@ -131,7 +139,7 @@ class _ProductDetailsState extends State<ProductDetails> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                widget.sapID,
+                product!.product!.productSapNumber!,
                 style: GoogleFonts.openSans(
                   fontSize: _height * .02,
                   fontWeight: FontWeight.w400,
@@ -180,7 +188,7 @@ class _ProductDetailsState extends State<ProductDetails> {
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Text(
-                widget.productDetails,
+                product!.product!.description!,
                 style: GoogleFonts.openSans(
                   fontSize: _height * 0.018,
                   fontWeight: FontWeight.w400,
@@ -349,11 +357,9 @@ class _ProductDetailsState extends State<ProductDetails> {
     setState(() {
       isLoading = true;
     });
-    Map req = {"productId": widget.productId, "distributorSapAccountId": distributorSapAccountId, "channelCode": "Mobile", "quantity": quantity, "unitOfMeasureCode": "kg"};
+    Map req = {"productId": product!.product!.productId!, "distributorSapAccountId": distributorSapAccountId, "channelCode": "Mobile", "quantity": quantity, "unitOfMeasureCode": "kg"};
 
     await postRequestWithToken('https://dms-order-ms.azurewebsites.net/api/cart/cartitem', req).then((value) {
-      // print(value);
-      // toast("Product added to the cart", length: Toast.LENGTH_LONG);
       if (value.statusCode.isSuccessful()) {
         var data = jsonDecode(value.body);
         print(data);
@@ -378,5 +384,36 @@ class _ProductDetailsState extends State<ProductDetails> {
       setState(() {});
 
     });
+  }
+
+  loadProductsItem() async {
+    final ProductBloc pb = Provider.of<ProductBloc>(context, listen: false);
+    final baseUrl = pb.productBaseUrl;
+    print(baseUrl);
+    // isLoading = true;
+    // setState(() {});
+
+    try {
+      var response = await await getRequestWithToken('$baseUrl/product/${widget.productId}');
+
+      if (this.mounted) {
+        if (response.statusCode == 200) {
+          var decodedData = jsonDecode(response.body);
+          var newdata = decodedData["data"];
+          print(newdata);
+          setState(() {
+            // isLoading = false;
+            // allProduct.addAll(newdata.map((m) => Product.fromJson(m)).toList());
+            product = ProductItem.fromJson(newdata);
+          });
+          print(product);
+        }
+      }
+    } catch (e) {
+      // isLoading = false;
+      print(e.toString());
+      throw 'No Internet connection';
+    }
+
   }
 }

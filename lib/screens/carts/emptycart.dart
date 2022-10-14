@@ -16,6 +16,7 @@ import 'package:dms/screens/products/productDetails.dart';
 import 'package:dms/splashscreen/splashscreen.dart';
 import 'package:dms/screens/support/new_support_request.dart';
 import 'package:dms/utils/colors.dart';
+import 'package:dms/utils/next_screen.dart';
 import 'package:dms/utils/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -84,7 +85,9 @@ class _EmptyCartState extends State<EmptyCart> {
           child: Row(children: [
             Center(
               child: InkWell(
-                onTap: () {},
+                onTap: () {
+                  nextScreenReplace(context, DashBoard());
+                },
                 child: Container(
                   height: _height * .0633,
                   width: _width * .9,

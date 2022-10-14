@@ -1,10 +1,19 @@
-import 'package:dms/constant.dart';
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:dms/layout/appWidget.dart';
-import 'package:dms/screens/support/newrequest.dart';
-import 'package:dms/screens/support/support_request_success.dart';
+import 'package:dms/screens/support/support_request_list.dart';
 import 'package:dms/utils/colors.dart';
+import 'package:dms/utils/next_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:nb_utils/nb_utils.dart';
+import 'package:provider/provider.dart';
+
+import '../../blocs/support_request_bloc.dart';
+import '../../layout/loading_indicator_widget.dart';
+import '../../layout/support_category_picker.dart';
+import '../../network/network_utils.dart';
 
 class NewSupportRequest extends StatefulWidget {
   const NewSupportRequest({Key? key}) : super(key: key);
@@ -15,7 +24,11 @@ class NewSupportRequest extends StatefulWidget {
 
 class _NewSupportRequestState extends State<NewSupportRequest> {
   var issueCont = TextEditingController();
+  var subjectCont = TextEditingController();
   var issueNode = FocusNode();
+  bool isLoading = false;
+
+  int selectedCategoryID = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +52,7 @@ class _NewSupportRequestState extends State<NewSupportRequest> {
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              isLoading ? LoadingIndicatorWidget() : Container(),
               SizedBox(
                 height: _screenHeight * .026,
               ),
@@ -66,7 +80,9 @@ class _NewSupportRequestState extends State<NewSupportRequest> {
                 height: _screenHeight * 0.025,
               ),
               GestureDetector(
-                onTap: () {},
+                onTap: () {
+                  nextScreen(context, SupportCategoryPicker());
+                },
                 child: Container(
                   decoration: BoxDecoration(
                       color: inputBackgroundColor,
@@ -83,7 +99,9 @@ class _NewSupportRequestState extends State<NewSupportRequest> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        "Select Category",
+                        Provider.of<SupportRequestBloc>(
+                            context)
+                            .categoryName!,
                         style: GoogleFonts.poppins(
                             color: iconColorSecondary,
                             //fontFamily: fontRegular,
@@ -102,40 +120,124 @@ class _NewSupportRequestState extends State<NewSupportRequest> {
               SizedBox(
                 height: _screenHeight * 0.025,
               ),
-              GestureDetector(
-                onTap: () {},
-                child: Container(
-                  decoration: BoxDecoration(
-                      color: inputBackgroundColor,
-                      border: Border.all(
-                          color: inputBorderColor,
-                          width: 1,
-                          style: BorderStyle.solid)),
-                  height: _height * .159,
-                  width: _width,
-                  // padding: EdgeInsets.symmetric(horizontal: _width *.04),
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: _width * .04),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      //mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        SizedBox(height: _height * .018),
-                        Text(
-                          "Describe your Issue",
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w400,
-                            fontSize: _height * .0166,
-                            color: Color(0xffB1BBC6),
-                          ),
-                        ),
-                      ],
-                    ),
+
+              Container(
+                width: _screenWidth * .85,
+                height: _screenHeight * .066,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(0),
+                ),
+                child: TextFormField(
+                  controller: subjectCont,
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    filled: true,
+                    fillColor: inputBackgroundColor,
+                    focusColor: inputBorderColor,
+                    hintText: "Subject",
+                    hintStyle: GoogleFonts.poppins(
+                        color: iconColorSecondary,
+                        fontSize: _screenHeight * .015),
+                    contentPadding:
+                    EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 15.0),
+                    focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                            color: inputBorderColor, width: 0.5)),
+                    enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                            color: iconColorSecondary,
+                            style: BorderStyle.solid,
+                            width: 0)),
                   ),
+                  keyboardType: TextInputType.text,
+                  textInputAction: TextInputAction.next,
+                  autofocus: false,
+                  textCapitalization: TextCapitalization.words,
+                  validator: (s) {
+                    if (s!.isEmpty) return 'Subject is required';
+                    return null;
+                  },
                 ),
               ),
+
+              // GestureDetector(
+              //   onTap: () {},
+              //   child: Container(
+              //     decoration: BoxDecoration(
+              //         color: inputBackgroundColor,
+              //         border: Border.all(
+              //             color: inputBorderColor,
+              //             width: 1,
+              //             style: BorderStyle.solid)),
+              //     height: _height * .159,
+              //     width: _width,
+              //     // padding: EdgeInsets.symmetric(horizontal: _width *.04),
+              //     child: Padding(
+              //       padding: EdgeInsets.symmetric(horizontal: _width * .04),
+              //       child: Column(
+              //         crossAxisAlignment: CrossAxisAlignment.start,
+              //         //mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              //         children: [
+              //           SizedBox(height: _height * .018),
+              //           Text(
+              //             "Describe your Issue",
+              //             style: GoogleFonts.poppins(
+              //               fontWeight: FontWeight.w400,
+              //               fontSize: _height * .0166,
+              //               color: Color(0xffB1BBC6),
+              //             ),
+              //           ),
+              //         ],
+              //       ),
+              //     ),
+              //   ),
+              // ),
               SizedBox(
-                height: _screenHeight * 0.4,
+                height: _screenHeight * 0.025,
+              ),
+              Container(
+                // width: _screenWidth * .85,
+                // height: _screenHeight * .066,
+                // decoration: BoxDecoration(
+                //   borderRadius: BorderRadius.circular(0),
+                // ),
+                child: TextFormField(
+                  controller: issueCont,
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    filled: true,
+                    fillColor: inputBackgroundColor,
+                    focusColor: inputBorderColor,
+                    hintText: "Describe your Issue",
+                    hintStyle: GoogleFonts.poppins(
+                        color: iconColorSecondary,
+                        fontSize: _screenHeight * .0174),
+                    contentPadding: EdgeInsets.fromLTRB(20.0, 15.0, 20.0, 15.0),
+                    focusedBorder: OutlineInputBorder(
+                        borderSide:
+                        BorderSide(color: inputBorderColor, width: 0.5)),
+                    enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                            color: iconColorSecondary,
+                            style: BorderStyle.solid,
+                            width: 0)),
+                  ),
+                  keyboardType: TextInputType.multiline,
+                  textInputAction: TextInputAction.done,
+                  autofocus: false,
+                  maxLines: null,
+                  minLines: 6,
+                  textCapitalization: TextCapitalization.words,
+                  validator: (s) {
+                    if (s!.isEmpty) return 'Description is required';
+                    return null;
+                  },
+                  focusNode: issueNode,
+                ),
+              ),
+
+              SizedBox(
+                height: _screenHeight * 0.25,
               ),
               // Align(
               //   alignment: Alignment.bottomCenter,
@@ -167,8 +269,9 @@ class _NewSupportRequestState extends State<NewSupportRequest> {
               // ),
               InkWell(
                 onTap: () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => NewReq()));
+                  postNewRequest();
+                  // Navigator.push(context,
+                  //     MaterialPageRoute(builder: (context) => NewReq()));
                 },
                 child: Container(
                   width: _screenWidth * .85,
@@ -191,5 +294,37 @@ class _NewSupportRequestState extends State<NewSupportRequest> {
         ),
       ),
     );
+  }
+
+  void postNewRequest() async {
+    final SupportRequestBloc cb = context.read<SupportRequestBloc>();
+    selectedCategoryID = cb.categoryID!;
+    var baseUrl = cb.supportBaseUrl;
+    print(selectedCategoryID);
+    try {
+      setState(() {
+        isLoading = true;
+      });
+      Map req = {"subject": subjectCont.text,"description": issueCont.text,"categoryId": selectedCategoryID,"channelCode": "Mobile"};
+      var response = await postRequestWithToken('$baseUrl/request', req);
+
+      if (this.mounted) {
+        if (response.statusCode == 200) {
+          var decodedData = jsonDecode(response.body);
+          setState(() {
+            isLoading = false;
+          });
+          toast(decodedData["message"], length: Toast.LENGTH_LONG);
+
+          nextScreenReplace(context, SupportRequestList());
+
+        }
+      }
+    } on SocketException {
+      setState(() {
+        isLoading = false;
+      });
+      throw 'No Internet connection';
+    }
   }
 }

@@ -6,7 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class FAQDetailsScreen extends StatefulWidget {
-  const FAQDetailsScreen({Key? key}) : super(key: key);
+  String question;
+  String answer;
+  FAQDetailsScreen(this.question, this.answer);
 
   @override
   State<FAQDetailsScreen> createState() => _FAQDetailsScreenState();
@@ -40,7 +42,7 @@ class _FAQDetailsScreenState extends State<FAQDetailsScreen> {
               padding: EdgeInsets.only(
                   left: _screenWidth * 0.04, right: _screenWidth * 0.04),
               child: Text(
-                "How to disable your\naccount",
+                widget.question,
                 style: GoogleFonts.poppins(
                   fontWeight: FontWeight.w600,
                   fontSize: _screenHeight * .0284,
@@ -86,7 +88,7 @@ class _FAQDetailsScreenState extends State<FAQDetailsScreen> {
                               child: Center(
                                 child: ListTile(
                                   title: text(
-                                    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec vulputate convallis sodales. Phasellus ut risus a mi gravida bibendum rhoncus eget diam. Donec imperdiet lacus purus, nec iaculis nisi ",
+                                    widget.answer,
                                     textColor: appTextColorPrimary,
                                     isLongText: true,
                                     fontSize: _screenHeight * .017,

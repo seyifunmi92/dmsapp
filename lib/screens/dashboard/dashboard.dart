@@ -1,10 +1,21 @@
+import 'dart:convert';
+
 import 'package:dms/layout/appWidget.dart';
 import 'package:dms/layout/dms_drawer.dart';
 import 'package:dms/screens/auth/login_screen.dart';
+import 'package:dms/screens/my%20orders/myorders.dart';
 import 'package:dms/screens/notifications/notification.dart';
+import 'package:dms/services/orderservices.dart';
 import 'package:dms/utils/colors.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import 'package:nb_utils/nb_utils.dart';
+import 'package:provider/provider.dart';
+import '../../layout/loading_indicator_widget.dart';
+import '../../model/ordermodels.dart';
+import '../../model/recentorder.dart';
 
 class DashBoard extends StatefulWidget {
   const DashBoard({Key? key}) : super(key: key);
@@ -13,381 +24,530 @@ class DashBoard extends StatefulWidget {
 }
 
 class _DashBoardState extends State<DashBoard> {
+  GetSapOrderDetails? _getSapDetails;
+  bool noList = false;
+  bool datadey = false;
+  bool emptyList = false;
+  RecentDms? orderRecent;
+  List<OrderItemR>? _dmsData;
   GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   bool menuClicked = false;
-  // var showDrawer = _scaffoldKey.currentState.openDrawer();
+  @override
+  void initState() {
+    getmyRecentDms();
+    Provider.of<OrderBloc>(context, listen: false).isLoading = true;
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final _format = NumberFormat("#,###,000.00");
+
     int closeCounter = 0;
     double _width = MediaQuery.of(context).size.width;
     double _height = MediaQuery.of(context).size.height;
     var mypaddingr = SizedBox(width: _width * 0.07436);
     var mypaddingrh = SizedBox(height: _height * 0.025);
     var mypaddingrh2 = SizedBox(height: _height * 0.05);
+    var containerwidth = _width * .85;
 
-    return WillPopScope(
-      onWillPop: () async {
-        if (closeCounter == 1) {
-          print("You have to click again");
-          closeCounter++;
-        } else {
-          showDialog(
-              context: context,
-              builder: (BuildContext context) {
-                return _exitDialog(context);
-              });
-        }
-        return true;
-      },
-      child: Scaffold(
-        key: _scaffoldKey,
-        appBar: dmsDrawerAppBar(context, '', () {
-          _scaffoldKey.currentState!.openDrawer();
-          setState(() {
-            menuClicked = true;
-          });
-        }, actions: [
-          Padding(
-            padding: EdgeInsets.only(right: _width * 0.09),
-            child: InkWell(
-              onTap: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => Notificationy()));
-              },
-              child: Icon(
-                Icons.notifications,
-                color: appColorPrimary,
-                size: _width * .05,
-                //size: 15,
+    return Provider.of<OrderBloc>(context, listen: false).isLoading
+        ? Scaffold(
+            body: Center(child: LoadingIndicatorWidget()),
+          )
+        : WillPopScope(
+            onWillPop: () async {
+              if (closeCounter == 1) {
+                print("You have to click again");
+                closeCounter++;
+              } else {
+                showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return _exitDialog(context);
+                    });
+              }
+              return true;
+            },
+            child: Scaffold(
+              key: _scaffoldKey,
+              appBar: dmsDrawerAppBar(context, '', () {
+                _scaffoldKey.currentState!.openDrawer();
+                setState(() {
+                  menuClicked = true;
+                });
+              }, actions: [
+                Padding(
+                  padding: EdgeInsets.only(right: _width * 0.09),
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => Notificationy()));
+                    },
+                    child: Icon(
+                      Icons.notifications,
+                      color: appColorPrimary,
+                      size: _width * .05,
+                      //size: 15,
+                    ),
+                  ),
+                ),
+              ]),
+              drawer: DMSDrawer(),
+              backgroundColor: appWhite,
+              body: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    // SizedBox(
+                    //   height: _height * .0365,
+                    // ),
+                    // Row(
+                    //   children: [
+                    //     mypaddingr,
+                    //     InkWell(
+                    //       onTap: () {
+                    //         _scaffoldKey.currentState!.openDrawer();
+                    //
+                    //         setState(() {
+                    //           menuClicked = true;
+                    //         });
+                    //       },
+                    //       child: Image.asset(
+                    //         "lib/assets/dmsmenu.png",
+                    //         height: _height * .020,
+                    //         width: _width * .072,
+                    //         color: appColorPrimary,
+                    //         //width: 31.71,
+                    //       ),
+                    //     ),
+                    //     // menuClicked
+                    //     //     ? Positioned(
+                    //     //         top: 50,
+                    //     //         left: 0,
+                    //     //         right: 0,
+                    //     //         child: InkWell(
+                    //     //           onTap: () {},
+                    //     //           child: Container(
+                    //     //             height: _height * .9,
+                    //     //             width: _width * .7,
+                    //     //             color: Colors.black,
+                    //     //           ),
+                    //     //         ),
+                    //     //       )
+                    //     //     : Center(),
+                    //     SizedBox(
+                    //       width: _width * .73,
+                    //     ),
+                    //     Icon(
+                    //       Icons.notifications,
+                    //       color: appColorPrimary,
+                    //       size: _width * .05,
+                    //       //size: 15,
+                    //     ),
+                    //   ],
+                    // ),
+                    SizedBox(
+                      height: _height * .015,
+                    ),
+                    Row(
+                      children: [
+                        mypaddingr,
+                        Text(
+                          "Dashboard",
+                          style: GoogleFonts.poppins(
+                            fontSize: _height * .03,
+                            fontWeight: FontWeight.w600,
+                            color: appColorPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(
+                      height: _height * .03,
+                    ),
+                    Row(
+                      children: [
+                        mypaddingr,
+                        Container(
+                          width: _width * .85,
+                          height: _height * .18,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  appColorPrimary,
+                                  Color(0xff292669),
+                                ]),
+                            //color: appColorPrimary,
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(_width * .06,
+                                _height * .027, _width * .06, _height * .027),
+                            child: SingleChildScrollView(
+                              child: Column(children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    InkWell(
+                                      onTap: () {},
+                                      child: Image.asset(
+                                        "lib/assets/dmsdots.png",
+                                        height: _height * .0047,
+                                        width: _width * .041,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    // mypaddingr2,
+                                    Image.asset(
+                                      "lib/assets/dmswallet.png",
+                                      height: _height * .047,
+                                      width: _width * .103,
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(
+                                  height: _height * .005,
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    // mypaddingr2,
+                                    Text(
+                                      "Current Balance",
+                                      style: GoogleFonts.openSans(
+                                        color: Color(0xffE9EDF7),
+                                        //fontSize: 12,
+                                        fontWeight: FontWeight.w400,
+                                        fontSize: _height * .014,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                SizedBox(
+                                  height: _height * .002,
+                                ),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    // mypaddingr2,
+                                    Text(
+                                      "N250,215",
+                                      style: GoogleFonts.openSans(
+                                        color: appWhite,
+                                        fontSize: _height * .04,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+
+                                    Image.asset(
+                                      "lib/assets/dmsgraph.png",
+                                      color: appWhite,
+                                      height: _height * .020,
+                                      width: _width * .151,
+                                    ),
+                                  ],
+                                ),
+                              ]),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    mypaddingrh,
+                    _boxCustom(context),
+                    Row(
+                      children: [
+                        mypaddingr,
+                      ],
+                    ),
+                    mypaddingrh,
+                    Row(
+                      children: [mypaddingr, _boxCustom2(context)],
+                    ),
+                    mypaddingrh,
+                    Row(
+                      children: [
+                        mypaddingr,
+                        _boxCustom3(context),
+                      ],
+                    ),
+                    mypaddingrh2,
+                    Padding(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: _width * 0.07436),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "My Recent Orders",
+                            style: GoogleFonts.openSans(
+                              fontSize: _height * .02,
+                              fontWeight: FontWeight.w600,
+                              color: appColorPrimary,
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: ((context) => MyOrders())));
+                            },
+                            child: Text(
+                              "View All",
+                              style: GoogleFonts.openSans(
+                                fontSize: _height * .014,
+                                fontWeight: FontWeight.w400,
+                                color: appColorPrimary,
+                              ),
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+                    SizedBox(
+                      height: _height * .02,
+                    ),
+                    Padding(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: _width * 0.07436),
+                      child: emptyList
+                          ? Column(
+                              children: [
+                                mypaddingrh,
+                                Text(
+                                  "No recent orders",
+                                  style: GoogleFonts.openSans(
+                                    fontSize: _height * .018,
+                                    fontWeight: FontWeight.w600,
+                                    color: appColorPrimary,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Container(
+                              width: containerwidth,
+                              height: _height * .095,
+                              decoration: BoxDecoration(
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black12,
+                                    blurStyle: BlurStyle.outer,
+                                    blurRadius: 15,
+                                    spreadRadius: 0,
+                                    offset: Offset.zero,
+                                  ),
+                                ],
+                                color: appWhite,
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                              child: Padding(
+                                padding: EdgeInsets.fromLTRB(
+                                    _width * .06,
+                                    _height * .012,
+                                    _width * .06,
+                                    _height * .012),
+                                child: Column(children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      orderRecent!.data!.dmsOrder!.id == null
+                                          ? Text("")
+                                          : Text(
+                                              "Order ${orderRecent!.data!.dmsOrder!.id}",
+                                              style: GoogleFonts.openSans(
+                                                  fontSize: _height * .02,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Color(0xff343434)),
+                                            ),
+                                      Text(
+                                        orderRecent!.data!.dmsOrder!
+                                                .dateCreated!.day
+                                                .toString() +
+                                            "-" +
+                                            orderRecent!.data!.dmsOrder!
+                                                .dateCreated!.month
+                                                .toString() +
+                                            "-" +
+                                            orderRecent!.data!.dmsOrder!
+                                                .dateCreated!.year
+                                                .toString(),
+                                        style: GoogleFonts.openSans(
+                                          fontSize: _height * .02,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(
+                                    height: _height * .005,
+                                  ),
+                                  SizedBox(
+                                    height: _height * .005,
+                                  ),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        orderRecent!.data!.dmsOrder!
+                                                    .estimatedNetValue! !=
+                                                0.00
+                                            ? "N${_format.format(orderRecent!.data!.dmsOrder!.estimatedNetValue)}"
+                                            : "N0.00",
+                                        style: GoogleFonts.openSans(
+                                            fontSize: _height * .014,
+                                            fontWeight: FontWeight.w400,
+                                            color: Color(0xff00CC08)),
+                                      ),
+                                      Container(
+                                        height: _height * .031,
+                                        width: _width * .16,
+                                        decoration: BoxDecoration(
+                                            color: Colors.green[50],
+                                            borderRadius:
+                                                BorderRadius.circular(5)),
+                                        child: Center(
+                                            child: Text(
+                                          orderRecent!.data!.dmsOrder!
+                                              .orderStatus!.name!,
+                                          style: GoogleFonts.dmSans(
+                                              fontSize: _height * .012,
+                                              fontWeight: FontWeight.w400,
+                                              color: Color(0xff00CC08)),
+                                        )),
+                                      ),
+                                    ],
+                                  ),
+                                ]),
+                              ),
+                            ),
+                      // _boxCustom4(RecentDmsOrders()),
+                    ),
+                    // Column(
+                    //     children: [...orderRecent!.map((e) => _boxCustom4())],
+                    //   )),
+
+                    mypaddingrh,
+                    // Padding(
+                    //   padding: EdgeInsets.symmetric(horizontal: _width * 0.07436),
+                    //   child: _boxCustom5(context),
+                    // ),
+                    // mypaddingrh,
+                    // Padding(
+                    //   padding: EdgeInsets.symmetric(horizontal: _width * 0.07436),
+                    //   child: _boxCustom6(context),
+                    // ),
+                    mypaddingrh,
+                    // Padding(
+                    //   padding: EdgeInsets.symmetric(horizontal: _width * 0.07436),
+                    //   child: Row(
+                    //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    //     children: [
+                    //       Text(
+                    //         "My Recent ATC",
+                    //         style: GoogleFonts.openSans(
+                    //           fontSize: _height * .02,
+                    //           fontWeight: FontWeight.w600,
+                    //           color: appColorPrimary,
+                    //         ),
+                    //       ),
+                    //       InkWell(
+                    //         onTap: () {},
+                    //         child: Text(
+                    //           "View All",
+                    //           style: GoogleFonts.openSans(
+                    //             fontSize: _height * .014,
+                    //             fontWeight: FontWeight.w400,
+                    //             color: appColorPrimary,
+                    //           ),
+                    //         ),
+                    //       )
+                    //     ],
+                    //   ),
+                    // ),
+                    // SizedBox(
+                    //   height: _height * .02,
+                    // ),
+                    // Padding(
+                    //   padding: EdgeInsets.symmetric(horizontal: _width * 0.07436),
+                    //   child: _boxCustom4y(context),
+                    // ),
+                    // mypaddingrh,
+                    // Padding(
+                    //   padding: EdgeInsets.symmetric(horizontal: _width * 0.07436),
+                    //   child: _boxCustom4y(context),
+                    // ),
+                    // mypaddingrh,
+                    // Padding(
+                    //   padding: EdgeInsets.symmetric(horizontal: _width * 0.07436),
+                    //   child: _boxCustom4y(context),
+                    // ),
+                    //mypaddingrh,
+                    Padding(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: _width * 0.07436),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "New Notifications",
+                            style: GoogleFonts.openSans(
+                              fontSize: _height * .02,
+                              fontWeight: FontWeight.w600,
+                              color: appColorPrimary,
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () {},
+                            child: Text(
+                              "View All",
+                              style: GoogleFonts.openSans(
+                                fontSize: _height * .014,
+                                fontWeight: FontWeight.w400,
+                                color: appColorPrimary,
+                              ),
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+                    SizedBox(
+                      height: _height * .02,
+                    ),
+                    Padding(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: _width * 0.07436),
+                      child: _boxCustom10(context),
+                    ),
+                    mypaddingrh,
+                    Padding(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: _width * 0.07436),
+                      child: _boxCustom10(context),
+                    ),
+                    mypaddingrh,
+                    // .88 - .14872
+                    Padding(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: _width * 0.07436),
+                      child: _boxCustom10(context),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ]),
-        drawer: DMSDrawer(),
-        backgroundColor: appWhite,
-        body: SingleChildScrollView(
-          child: Column(
-            children: [
-              // SizedBox(
-              //   height: _height * .0365,
-              // ),
-              // Row(
-              //   children: [
-              //     mypaddingr,
-              //     InkWell(
-              //       onTap: () {
-              //         _scaffoldKey.currentState!.openDrawer();
-              //
-              //         setState(() {
-              //           menuClicked = true;
-              //         });
-              //       },
-              //       child: Image.asset(
-              //         "lib/assets/dmsmenu.png",
-              //         height: _height * .020,
-              //         width: _width * .072,
-              //         color: appColorPrimary,
-              //         //width: 31.71,
-              //       ),
-              //     ),
-              //     // menuClicked
-              //     //     ? Positioned(
-              //     //         top: 50,
-              //     //         left: 0,
-              //     //         right: 0,
-              //     //         child: InkWell(
-              //     //           onTap: () {},
-              //     //           child: Container(
-              //     //             height: _height * .9,
-              //     //             width: _width * .7,
-              //     //             color: Colors.black,
-              //     //           ),
-              //     //         ),
-              //     //       )
-              //     //     : Center(),
-              //     SizedBox(
-              //       width: _width * .73,
-              //     ),
-              //     Icon(
-              //       Icons.notifications,
-              //       color: appColorPrimary,
-              //       size: _width * .05,
-              //       //size: 15,
-              //     ),
-              //   ],
-              // ),
-              SizedBox(
-                height: _height * .015,
-              ),
-              Row(
-                children: [
-                  mypaddingr,
-                  Text(
-                    "Dashboard",
-                    style: GoogleFonts.poppins(
-                      fontSize: _height * .03,
-                      fontWeight: FontWeight.w600,
-                      color: appColorPrimary,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(
-                height: _height * .03,
-              ),
-              Row(
-                children: [
-                  mypaddingr,
-                  Container(
-                    width: _width * .85,
-                    height: _height * .18,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            appColorPrimary,
-                            Color(0xff292669),
-                          ]),
-                      //color: appColorPrimary,
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.fromLTRB(_width * .06, _height * .027,
-                          _width * .06, _height * .027),
-                      child: SingleChildScrollView(
-                        child: Column(children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              InkWell(
-                                onTap: () {},
-                                child: Image.asset(
-                                  "lib/assets/dmsdots.png",
-                                  height: _height * .0047,
-                                  width: _width * .041,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              // mypaddingr2,
-                              Image.asset(
-                                "lib/assets/dmswallet.png",
-                                height: _height * .047,
-                                width: _width * .103,
-                              ),
-                            ],
-                          ),
-                          SizedBox(
-                            height: _height * .005,
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              // mypaddingr2,
-                              Text(
-                                "Current Balance",
-                                style: GoogleFonts.openSans(
-                                  color: Color(0xffE9EDF7),
-                                  //fontSize: 12,
-                                  fontWeight: FontWeight.w400,
-                                  fontSize: _height * .014,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(
-                            height: _height * .002,
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              // mypaddingr2,
-                              Text(
-                                "N250,215",
-                                style: GoogleFonts.openSans(
-                                  color: appWhite,
-                                  fontSize: _height * .04,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-
-                              Image.asset(
-                                "lib/assets/dmsgraph.png",
-                                color: appWhite,
-                                height: _height * .020,
-                                width: _width * .151,
-                              ),
-                            ],
-                          ),
-                        ]),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              mypaddingrh,
-              _boxCustom(context),
-              Row(
-                children: [
-                  mypaddingr,
-                ],
-              ),
-              mypaddingrh,
-              Row(
-                children: [mypaddingr, _boxCustom2(context)],
-              ),
-              mypaddingrh,
-              Row(
-                children: [
-                  mypaddingr,
-                  _boxCustom3(context),
-                ],
-              ),
-              mypaddingrh2,
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: _width * 0.07436),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "My Recent Orders",
-                      style: GoogleFonts.openSans(
-                        fontSize: _height * .02,
-                        fontWeight: FontWeight.w600,
-                        color: appColorPrimary,
-                      ),
-                    ),
-                    InkWell(
-                      onTap: () {},
-                      child: Text(
-                        "View All",
-                        style: GoogleFonts.openSans(
-                          fontSize: _height * .014,
-                          fontWeight: FontWeight.w400,
-                          color: appColorPrimary,
-                        ),
-                      ),
-                    )
-                  ],
-                ),
-              ),
-              SizedBox(
-                height: _height * .02,
-              ),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: _width * 0.07436),
-                child: _boxCustom4(context),
-              ),
-              mypaddingrh,
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: _width * 0.07436),
-                child: _boxCustom5(context),
-              ),
-              mypaddingrh,
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: _width * 0.07436),
-                child: _boxCustom6(context),
-              ),
-              mypaddingrh,
-              // Padding(
-              //   padding: EdgeInsets.symmetric(horizontal: _width * 0.07436),
-              //   child: Row(
-              //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              //     children: [
-              //       Text(
-              //         "My Recent ATC",
-              //         style: GoogleFonts.openSans(
-              //           fontSize: _height * .02,
-              //           fontWeight: FontWeight.w600,
-              //           color: appColorPrimary,
-              //         ),
-              //       ),
-              //       InkWell(
-              //         onTap: () {},
-              //         child: Text(
-              //           "View All",
-              //           style: GoogleFonts.openSans(
-              //             fontSize: _height * .014,
-              //             fontWeight: FontWeight.w400,
-              //             color: appColorPrimary,
-              //           ),
-              //         ),
-              //       )
-              //     ],
-              //   ),
-              // ),
-              // SizedBox(
-              //   height: _height * .02,
-              // ),
-              // Padding(
-              //   padding: EdgeInsets.symmetric(horizontal: _width * 0.07436),
-              //   child: _boxCustom4y(context),
-              // ),
-              // mypaddingrh,
-              // Padding(
-              //   padding: EdgeInsets.symmetric(horizontal: _width * 0.07436),
-              //   child: _boxCustom4y(context),
-              // ),
-              // mypaddingrh,
-              // Padding(
-              //   padding: EdgeInsets.symmetric(horizontal: _width * 0.07436),
-              //   child: _boxCustom4y(context),
-              // ),
-              //mypaddingrh,
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: _width * 0.07436),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "New Notifications",
-                      style: GoogleFonts.openSans(
-                        fontSize: _height * .02,
-                        fontWeight: FontWeight.w600,
-                        color: appColorPrimary,
-                      ),
-                    ),
-                    InkWell(
-                      onTap: () {},
-                      child: Text(
-                        "View All",
-                        style: GoogleFonts.openSans(
-                          fontSize: _height * .014,
-                          fontWeight: FontWeight.w400,
-                          color: appColorPrimary,
-                        ),
-                      ),
-                    )
-                  ],
-                ),
-              ),
-              SizedBox(
-                height: _height * .02,
-              ),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: _width * 0.07436),
-                child: _boxCustom10(context),
-              ),
-              mypaddingrh,
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: _width * 0.07436),
-                child: _boxCustom10(context),
-              ),
-              mypaddingrh,
-              // .88 - .14872
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: _width * 0.07436),
-                child: _boxCustom10(context),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+          );
   }
 
   Widget _boxCustom(BuildContext context) {
@@ -592,7 +752,9 @@ class _DashBoardState extends State<DashBoard> {
     );
   }
 
-  Widget _boxCustom4(BuildContext context) {
+  Widget _boxCustom4(RecentDmsOrders _order) {
+    final _format = NumberFormat("#,###,000.00");
+
     double _width = MediaQuery.of(context).size.width;
     double _height = MediaQuery.of(context).size.height;
     var mypaddingr2 = SizedBox(width: _width * 0.05);
@@ -629,15 +791,23 @@ class _DashBoardState extends State<DashBoard> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              _order.datarecent!.id == null
+                  ? Text("")
+                  : Text(
+                      "Order ${_order.datarecent!.id}",
+                      style: GoogleFonts.openSans(
+                          fontSize: _height * .02,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xff343434)),
+                    ),
               Text(
-                "Order 123",
-                style: GoogleFonts.openSans(
-                    fontSize: _height * .02,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xff343434)),
-              ),
-              Text(
-                "12-05-22",
+                _order.datarecent!.orderItems![0].dateCreated!.day.toString() +
+                    "-" +
+                    _order.datarecent!.orderItems![0].dateCreated!.month
+                        .toString() +
+                    "-" +
+                    _order.datarecent!.orderItems![0].dateCreated!.year
+                        .toString(),
                 style: GoogleFonts.openSans(
                   fontSize: _height * .02,
                   fontWeight: FontWeight.w600,
@@ -655,7 +825,9 @@ class _DashBoardState extends State<DashBoard> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "N20,000",
+                _order.datarecent!.estimatedNetValue != 0.00
+                    ? "N${_format.format(_order.datarecent!.estimatedNetValue)}"
+                    : "N0.00",
                 style: GoogleFonts.openSans(
                     fontSize: _height * .014,
                     fontWeight: FontWeight.w400,
@@ -669,7 +841,7 @@ class _DashBoardState extends State<DashBoard> {
                     borderRadius: BorderRadius.circular(5)),
                 child: Center(
                     child: Text(
-                  "Completed",
+                  _order.datarecent!.orderStatus!.name!,
                   style: GoogleFonts.dmSans(
                       fontSize: _height * .012,
                       fontWeight: FontWeight.w400,
@@ -1760,5 +1932,56 @@ class _DashBoardState extends State<DashBoard> {
         ),
       ),
     );
+  }
+
+  void getmyRecentDms() {
+    Provider.of<OrderBloc>(context, listen: false)
+        .getrecentDms()
+        .then((value) => sapOutput(value));
+  }
+
+  sapOutput(String sapD) {
+    var recentDetails = jsonDecode(sapD);
+    if (sapD.contains("dmsOrder")) {
+      Provider.of<OrderBloc>(context, listen: false).isLoading = false;
+      setState(() {
+        orderRecent = RecentDms.fromJson(recentDetails);
+      });
+    } else if (recentDetails["data"] == "null") {
+      print("no record oo");
+      Provider.of<OrderBloc>(context, listen: false).isLoading = false;
+      setState(() {
+        noList = true;
+      });
+      toast("Oops, no record for this");
+    } else {
+      toast("An error occured.Please try again");
+      Provider.of<OrderBloc>(context, listen: false).isLoading = false;
+    }
+  }
+
+  output(String recentDms) {
+    var bodyT = jsonDecode(recentDms);
+    if (recentDms.contains("data")) {
+      if (bodyT["status"] == "Successful") {
+        Provider.of<OrderBloc>(context, listen: false).isLoading = false;
+        dynamic _gettX = bodyT;
+        List myList = _gettX["data"]["dmsOrder"]["orderItems"];
+        if (myList.isNotEmpty) {
+          print(myList);
+          print(myList.runtimeType);
+          if (myList.isEmpty) {
+            emptyList = true;
+            toast("Oops.No Orders");
+          }
+          setState(() {
+            print(bodyT["message"]);
+          });
+        } else {
+          Provider.of<OrderBloc>(context, listen: false).isLoading = false;
+          toast(bodyT["message"]);
+        }
+      }
+    }
   }
 }

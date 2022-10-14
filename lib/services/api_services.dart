@@ -32,6 +32,20 @@ Future sendGetrDataRequest(String endpoint, String dataType) async {
   }
 }
 
+Future sendGetrStateDataRequest(String endpoint) async {
+  Response data = await getrDataRequest(endpoint);
+  if(data.statusCode == 200){
+    var result = await handleResponseSingle(data);
+    return result["data"]["state"];
+  } else {
+    if (data.body.isJson()) {
+      var data2 = jsonDecode(data.body);
+      print(data2);
+      toast(data2['message']);
+    }
+  }
+}
+
 Future sendPostRequest(Map req, String endpoint) async {
   return handleResponse(await postRequest(endpoint, req));
 }

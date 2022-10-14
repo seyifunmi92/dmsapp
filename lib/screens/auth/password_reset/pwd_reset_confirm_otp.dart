@@ -221,37 +221,37 @@ class _PwdResetConfirmOTPState extends State<PwdResetConfirmOTP> {
             ),
           ),
         ),
-        bottomNavigationBar: SafeArea(
-          child: Container(
-            width: double.infinity,
-            height: 70.0,
-            margin: const EdgeInsetsDirectional.fromSTEB(20.0, 0.0, 10.0, 0.0),
-            // decoration: BoxDecoration(
-            //   border:
-            // ),
-            decoration: BoxDecoration(
-                border: Border(
-                    top: BorderSide(color: Colors.black.withOpacity(0.13)))),
-            child: Padding(
-              padding: EdgeInsets.only(top: _screenHeight * 0.008),
-              child: Row(
-                children: [
-                  Text("Have an account?"),
-                  GestureDetector(
-                    onTap: () {
-                      nextScreen(context, LoginScreen());
-                    },
-                    child: Text(
-                      " Login",
-                      style: TextStyle(
-                          fontFamily: fontBold, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
+        // bottomNavigationBar: SafeArea(
+        //   child: Container(
+        //     width: double.infinity,
+        //     height: 70.0,
+        //     margin: const EdgeInsetsDirectional.fromSTEB(20.0, 0.0, 10.0, 0.0),
+        //     // decoration: BoxDecoration(
+        //     //   border:
+        //     // ),
+        //     decoration: BoxDecoration(
+        //         border: Border(
+        //             top: BorderSide(color: Colors.black.withOpacity(0.13)))),
+        //     child: Padding(
+        //       padding: EdgeInsets.only(top: _screenHeight * 0.008),
+        //       child: Row(
+        //         children: [
+        //           Text("Have an account?"),
+        //           GestureDetector(
+        //             onTap: () {
+        //               nextScreen(context, LoginScreen());
+        //             },
+        //             child: Text(
+        //               " Login",
+        //               style: TextStyle(
+        //                   fontFamily: fontBold, fontWeight: FontWeight.bold),
+        //             ),
+        //           ),
+        //         ],
+        //       ),
+        //     ),
+        //   ),
+        // ),
       ),
     );
   }
@@ -278,6 +278,7 @@ class _PwdResetConfirmOTPState extends State<PwdResetConfirmOTP> {
         if (value.body.isJson()) {
           var data = jsonDecode(value.body);
           print(data);
+
           toast(data['message']);
           setState(() {
             isLoading = false;
@@ -340,4 +341,7 @@ class _PwdResetConfirmOTPState extends State<PwdResetConfirmOTP> {
       setState(() {});
     }
   }
+
+
+
 }

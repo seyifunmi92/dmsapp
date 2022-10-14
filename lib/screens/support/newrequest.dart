@@ -6,14 +6,22 @@ import 'package:dotted_line/dotted_line.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../model/my_request_item.dart';
+
 class NewReq extends StatefulWidget {
-  const NewReq({Key? key}) : super(key: key);
+
+  MyRequestItem supportItem;
+
+  NewReq({Key? key, required this.supportItem}) : super(key: key);
 
   @override
   _NewReqState createState() => _NewReqState();
 }
 
 class _NewReqState extends State<NewReq> {
+
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -47,10 +55,10 @@ class _NewReqState extends State<NewReq> {
           ),
           InkWell(
             onTap: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => SupportRequestSuccessScreen()));
+              // Navigator.push(
+              //     context,
+              //     MaterialPageRoute(
+              //         builder: (context) => SupportRequestSuccessScreen()));
             },
             child: Container(
               width: _width,
@@ -101,7 +109,7 @@ class _NewReqState extends State<NewReq> {
                         ),
                       ),
                       Text(
-                        "Funding",
+                        widget.supportItem.requestCategory!.name!,
                         style: GoogleFonts.poppins(
                           fontSize: _height * .0142,
                           fontWeight: FontWeight.w600,
@@ -147,7 +155,7 @@ class _NewReqState extends State<NewReq> {
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       Text(
-                        "I’m having issues with funding wallet, money\nhas left my account",
+                        widget.supportItem.description!,
                         style: GoogleFonts.poppins(
                           fontSize: _height * .0142,
                           fontWeight: FontWeight.w400,

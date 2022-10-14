@@ -1,7 +1,7 @@
 import 'dart:convert';
-
 import 'package:dms/layout/appWidget.dart';
 import 'package:dms/layout/dms_drawer.dart';
+import 'package:dms/screens/my%20orders/ordercancelsuccess.dart';
 import 'package:dms/screens/my%20orders/orderdetails.dart';
 import 'package:dms/utils/colors.dart';
 import 'package:flutter/material.dart';
@@ -9,22 +9,24 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:nb_utils/nb_utils.dart';
 import 'package:provider/provider.dart';
-
 import '../../layout/loading_indicator_widget.dart';
 import '../../model/ordermodels.dart';
 import '../../services/orderservices.dart';
+import 'myorders.dart';
+import 'myorders2.dart';
+import 'newmyordrs.dart';
 
 class SavedOrders extends StatefulWidget {
   String status;
   String sapNumber;
   SavedOrders(this.status, this.sapNumber);
-
   @override
   _SavedOrdersState createState() => _SavedOrdersState();
 }
 
 class _SavedOrdersState extends State<SavedOrders> {
   bool emptyList = false;
+  CancelOrder? orderCancel;
   List<DmsOrder>? _dmsData;
   @override
   void initState() {
@@ -41,7 +43,21 @@ class _SavedOrdersState extends State<SavedOrders> {
           )
         : Scaffold(
             backgroundColor: appWhite,
-            appBar: dmsAppBar(context, ""),
+            appBar: AppBar(
+              automaticallyImplyLeading: false,
+              backgroundColor: Colors.white,
+              shadowColor: Colors.transparent,
+              leading: IconButton(
+                onPressed: () {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => MyOrders()));
+                },
+                icon: Icon(
+                  Icons.arrow_back_ios,
+                  color: appColorPrimary,
+                ),
+              ),
+            ),
             body: _body(context),
           );
   }
@@ -162,7 +178,7 @@ class _SavedOrdersState extends State<SavedOrders> {
                     ),
                   ],
                 )
-              : Row(
+              : Column(
                   children: [
                     mypadr,
                     ..._dmsData!.map((e) => _boxCustom1(e)),
@@ -183,7 +199,7 @@ class _SavedOrdersState extends State<SavedOrders> {
         Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) => OrderDetails(_orderDms.dmsorderId!)));
+                builder: (context) => OrderDetails(_orderDms.dmsorderId!, "")));
       },
       child: Padding(
         padding: EdgeInsets.only(bottom: _height * .01),
@@ -230,8 +246,8 @@ class _SavedOrdersState extends State<SavedOrders> {
                     ),
                     Text(
                       _orderDms.estimatedNetvalue != 0.00
-                          ? "\₦${_format.format(_orderDms.estimatedNetvalue)}"
-                          : "\₦0.00",
+                          ? "\N${_format.format(_orderDms.estimatedNetvalue)}"
+                          : "\N0.00",
                       style: GoogleFonts.openSans(
                         fontSize: _height * .02,
                         fontWeight: FontWeight.w600,
@@ -248,13 +264,13 @@ class _SavedOrdersState extends State<SavedOrders> {
                   children: [
                     Container(
                       height: _height * .0284,
-                      width: _width * .305,
+                      width: _width * .20,
                       decoration: BoxDecoration(
                           color: Color(0xffE4EBF3).withOpacity(0.5),
                           borderRadius: BorderRadius.circular(5)),
                       child: Center(
                           child: Text(
-                        _orderDms.orderType!.code!,
+                        _orderDms.orderType!.name!,
                         style: GoogleFonts.openSans(
                             fontSize: _height * .0118,
                             fontWeight: FontWeight.w400,
@@ -262,7 +278,13 @@ class _SavedOrdersState extends State<SavedOrders> {
                       )),
                     ),
                     InkWell(
-                      onTap: () {},
+                      onTap: () {
+                        showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return _cancelDialog(_orderDms);
+                            });
+                      },
                       child: Image.asset(
                         "lib/assets/dell.png",
                         height: _height * .016,
@@ -429,6 +451,31 @@ class _SavedOrdersState extends State<SavedOrders> {
     );
   }
 
+  void cancelOrder(
+      int dmsOrderId, String orderSapnumber, int distributorSapAccountid) {
+    Provider.of<OrderBloc>(context, listen: false)
+        .cancelOrderDms(dmsOrderId, orderSapnumber, distributorSapAccountid)
+        .then((value) => (output(value)));
+  }
+
+  output(String payLoad) {
+    print("Seyileee");
+    print(payLoad);
+    var bodyT = jsonDecode(payLoad);
+    if (bodyT["status"] == "Successful") {
+      print("Order Canceled");
+      Navigator.pop(context);
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) =>
+                  OrderCancel(widget.status, widget.sapNumber)));
+    } else {
+      Provider.of<OrderBloc>(context, listen: false).isLoading = false;
+      toast(bodyT["message"].toString());
+    }
+  }
+
   void getDMS() {
     Provider.of<OrderBloc>(context, listen: false)
         .getmyDMSOrders(widget.status, widget.sapNumber)
@@ -436,6 +483,7 @@ class _SavedOrdersState extends State<SavedOrders> {
   }
 
   _output(String dmsList) {
+    print("geee");
     List empty = [];
     var bodyT = jsonDecode(dmsList);
     if (dmsList.contains("data")) {
@@ -458,5 +506,122 @@ class _SavedOrdersState extends State<SavedOrders> {
         }
       }
     }
+  }
+
+  Widget _cancelDialog(DmsOrder _cancel) {
+    double _width = MediaQuery.of(context).size.width;
+    double _height = MediaQuery.of(context).size.height;
+    var containerheight = _height * .4142;
+    var _mypadding = SizedBox(height: containerheight * .08);
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: appWhite,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        height: containerheight,
+        //color: Colors.black,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.vertical,
+          child: Column(
+            children: [
+              _mypadding,
+              Image.asset(
+                "lib/assets/dmsquestionmark.png",
+                height: _height * .142,
+                width: _width * .307,
+                //width: 31.71,
+              ),
+              _mypadding,
+              Text(
+                "Are you sure you want to cancel this order",
+                style: GoogleFonts.poppins(
+                  color: Color(0xff8D93A1),
+                  fontSize: _height * .02,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              Text(
+                "",
+                style: GoogleFonts.poppins(
+                  color: Color(0xff8D93A1),
+                  //fontSize: _width * .041,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              _mypadding,
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: _width * .09365),
+                child: Row(children: [
+                  InkWell(
+                    onTap: () {
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      //color: Color(0xffFFFFFF),
+                      width: _width * .382,
+                      height: _height * .0633,
+                      child: Center(
+                          child: Text(
+                        "No",
+                        style: GoogleFonts.poppins(
+                          fontSize: _height * .0174,
+                          color: Color(0xff000000),
+                        ),
+                      )),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: appColorPrimary),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: _width * .0487,
+                  ),
+                  InkWell(
+                    onTap: () {
+                      Provider.of<OrderBloc>(context, listen: false).isLoading =
+                          true;
+                      print(
+                          "great, isloading = ${Provider.of<OrderBloc>(context, listen: false).isLoading}");
+                      Provider.of<OrderBloc>(context, listen: false).isLoading
+                          ? showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return Scaffold(
+                                  backgroundColor: Colors.transparent,
+                                  body: Center(child: LoadingIndicatorWidget()),
+                                );
+                              })
+                          : null;
+                      cancelOrder(_cancel.dmsorderId!, "String",
+                          int.parse(widget.sapNumber));
+                    },
+                    child: Container(
+                      width: _width * .382,
+                      height: _height * .0633,
+                      decoration: BoxDecoration(
+                        color: appColorPrimary,
+                      ),
+                      child: Center(
+                          child: Text(
+                        "Yes",
+                        style: GoogleFonts.poppins(
+                          color: appWhite,
+                          fontSize: _height * .0174,
+                        ),
+                      )),
+                    ),
+                  ),
+                ]),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

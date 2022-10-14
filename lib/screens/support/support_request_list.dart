@@ -1,10 +1,22 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:dms/constant.dart';
 import 'package:dms/layout/appWidget.dart';
+import 'package:dms/model/my_request_item.dart';
 import 'package:dms/screens/support/new_support_request.dart';
 import 'package:dms/screens/support/newrequest.dart';
+import 'package:dms/screens/support/support_request_list_empty.dart';
 import 'package:dms/utils/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+
+import '../../blocs/support_request_bloc.dart';
+import '../../layout/loading_indicator_widget.dart';
+import '../../network/network_utils.dart';
+import '../../utils/next_screen.dart';
 
 class SupportRequestList extends StatefulWidget {
   const SupportRequestList({Key? key}) : super(key: key);
@@ -19,6 +31,15 @@ class _SupportRequestListState extends State<SupportRequestList> {
   var _yOffset = 0.0;
   var _blurRadius = 0.0;
   var _spreadRadius = 0.0;
+
+  List<MyRequestItem> allRequest = [];
+
+  @override
+  void initState() {
+    loadMyRequestItems();
+    // TODO: implement initState
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,12 +76,14 @@ class _SupportRequestListState extends State<SupportRequestList> {
               SizedBox(
                 height: _screenHeight * 0.024,
               ),
+              allRequest.isEmpty ? LoadingIndicatorWidget() : Container(),
               ListView.builder(
-                  itemCount: 2,
+                  itemCount: allRequest.length,
                   scrollDirection: Axis.vertical,
                   physics: NeverScrollableScrollPhysics(),
                   shrinkWrap: true,
                   itemBuilder: (context, index) {
+                   MyRequestItem myRequest = allRequest[index];
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12.0),
                       child: Container(
@@ -86,7 +109,7 @@ class _SupportRequestListState extends State<SupportRequestList> {
                             Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => NewReq()));
+                                    builder: (context) => NewReq(supportItem: myRequest,)));
                           },
                           title: Column(
                             children: [
@@ -96,7 +119,7 @@ class _SupportRequestListState extends State<SupportRequestList> {
                               Align(
                                   alignment: Alignment.topLeft,
                                   child: Text(
-                                    "Lorem Ipsum",
+                                    myRequest.subject!,
                                     style: GoogleFonts.poppins(
                                       color: Color(0xff000000),
                                       fontWeight: FontWeight.w400,
@@ -110,7 +133,7 @@ class _SupportRequestListState extends State<SupportRequestList> {
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 children: [
                                   Text(
-                                    "I’m having issues with funding wallet, money has left\nmy account, but",
+                                    myRequest.description!,
                                     style: GoogleFonts.poppins(
                                       fontSize: _screenHeight * .0142,
                                       color: Color(0xff000000),
@@ -130,7 +153,8 @@ class _SupportRequestListState extends State<SupportRequestList> {
                                   height: _screenHeight * .005,
                                 ),
                                 Text(
-                                  "27, Jan 2020",
+                                  "29 Aug, 2022",
+                                  // (DateFormat('MMM dd yyyy').parse(myRequest.dateCreated!)).toString(),
                                   style: GoogleFonts.poppins(
                                     fontSize: _screenHeight * .0142,
                                     color: Color(0xff000000),
@@ -141,7 +165,8 @@ class _SupportRequestListState extends State<SupportRequestList> {
                                     child: Padding(
                                       padding: const EdgeInsets.all(2.0),
                                       child: Text(
-                                        index.isEven ? "Open" : "Closed",
+                                        // index.isEven ? "Open" : "Closed",
+                                        myRequest.requestStatus!.name!,
                                         style: GoogleFonts.poppins(
                                             fontSize: _screenHeight * .0142,
                                             fontWeight: FontWeight.w500,
@@ -195,10 +220,6 @@ class _SupportRequestListState extends State<SupportRequestList> {
                         context,
                         MaterialPageRoute(
                             builder: (context) => NewSupportRequest()));
-                    //finish(context);
-                    // Navigator.of(context).pushAndRemoveUntil(
-                    //     MaterialPageRoute(builder: (context) => ATCsuccess()),
-                    //     (Route<dynamic> route) => false);
                   },
                   child: Container(
                     width: _screenWidth * .92,
@@ -224,4 +245,31 @@ class _SupportRequestListState extends State<SupportRequestList> {
       ),
     );
   }
+
+  loadMyRequestItems() async {
+    final SupportRequestBloc pb = Provider.of<SupportRequestBloc>(context, listen: false);
+    final baseUrl = pb.supportBaseUrl;
+    print(baseUrl);
+    try {
+      var response = await await getRequestWithToken('$baseUrl/request');
+
+      if (this.mounted) {
+        if (response.statusCode == 200) {
+          var decodedData = jsonDecode(response.body);
+          List? newdata = decodedData["data"]["requests"];
+          if(newdata!.isEmpty){
+            nextScreenReplace(context, SupportRequestListEmptyScreen());
+            return;
+          }
+          setState(() {
+            allRequest.addAll(newdata.map((m) => MyRequestItem.fromJson(m)).toList());
+          });
+        }
+      }
+    } on SocketException {
+      throw 'No Internet connection';
+    }
+
+  }
+
 }

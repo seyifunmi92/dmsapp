@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:dms/blocs/login_bloc.dart';
 import 'package:dms/layout/appWidget.dart';
@@ -8,8 +9,10 @@ import 'package:dms/screens/success_failure_screen/success.dart';
 import 'package:dms/utils/colors.dart';
 import 'package:dms/utils/next_screen.dart';
 import 'package:dotted_border/dotted_border.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:modal_progress_hud_alt/modal_progress_hud_alt.dart';
 import 'package:nb_utils/nb_utils.dart';
 import 'package:provider/provider.dart';
@@ -40,7 +43,8 @@ class _RegisterScreenContdState extends State<RegisterScreenContd> {
   int closeCounter = 0;
   String registrationID = "";
   bool isLoading = false;
-
+  File? imageFile = null;
+  String base64Image = "";
 
   @override
   void initState() {
@@ -52,6 +56,36 @@ class _RegisterScreenContdState extends State<RegisterScreenContd> {
   Widget build(BuildContext context) {
     final _screenWidth = MediaQuery.of(context).size.width;
     final _screenHeight = MediaQuery.of(context).size.height;
+
+    final action1 = CupertinoActionSheet(
+        title: Text(
+          'Upload Profile Image',
+          style: boldTextStyle(size: 18),
+        ),
+        message: Text('Choose how you want to upload.'),
+        actions: [
+          CupertinoActionSheetAction(
+              onPressed: () {
+                _getFromGallery();
+                finish(context);
+              },
+              child: Text('From Gallery', style: primaryTextStyle(size: 18))),
+          CupertinoActionSheetAction(
+              onPressed: () {
+                _getFromCamera();
+                finish(context);
+              },
+              child: Text('From Camera', style: primaryTextStyle(size: 18)))
+        ],
+        cancelButton: CupertinoActionSheetAction(
+            onPressed: () {
+              finish(context);
+            },
+            child: Text(
+              'Cancel',
+              style: primaryTextStyle(color: redColor, size: 18),
+            )),
+      );
 
     return ModalProgressHUD(
       inAsyncCall: isLoading,
@@ -268,7 +302,9 @@ class _RegisterScreenContdState extends State<RegisterScreenContd> {
                   ),
 
                   InkWell(
-                      onTap: () {},
+                      onTap: () {
+                        showCupertinoModalPopup(context: context, builder: (BuildContext context) => action1);
+                      },
                       child: DottedBorder(
                         // strokeWidth: 1,
                         color: Color(0xffCDCFD2),
@@ -282,8 +318,11 @@ class _RegisterScreenContdState extends State<RegisterScreenContd> {
                                 SizedBox(
                                   height: _screenHeight * .02,
                                 ),
-                                Image.asset(
+                                imageFile == null ? Image.asset(
                                   "lib/assets/upload.png",
+                                  height: _screenHeight * .0247,
+                                ) : Image.file(
+                                  imageFile!,
                                   height: _screenHeight * .0247,
                                 ),
                                 // Icon(Icons.upload_file),
@@ -595,8 +634,12 @@ class _RegisterScreenContdState extends State<RegisterScreenContd> {
       registrationID = lb2.registrationID!;
       isLoading = true;
       setState(() {});
+      if(base64Image == ""){
+        toasty(context, "Select profile photo");
+        return;
+      }
 
-      Map req = {"registrationId": registrationID, "userName": userNameCont.text, "password": passwordCont.text};
+      Map req = {"registrationId": registrationID, "firstName":userNameCont.text, "lastName":userNameCont.text, "userName": userNameCont.text, "password": passwordCont.text, "profilePhoto": base64Image};
 
       await postRequest('/register/complete', req).then((value) {
         print(value);
@@ -633,5 +676,42 @@ class _RegisterScreenContdState extends State<RegisterScreenContd> {
       setState(() {});
     }
   }
+
+
+  /// Get from gallery
+  _getFromGallery() async {
+    XFile? pickedFile = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1800,
+      maxHeight: 1800,
+    );
+    if (pickedFile != null) {
+      setState(() {
+        imageFile = File(pickedFile.path);
+      });
+      getBase64();
+    }
+  }
+
+  /// Get from Camera
+  _getFromCamera() async {
+    XFile? pickedFile = await ImagePicker().pickImage(
+      source: ImageSource.camera,
+      maxWidth: 1800,
+      maxHeight: 1800,
+    );
+    if (pickedFile != null) {
+      setState(() {
+        imageFile = File(pickedFile.path);
+      });
+      getBase64();
+    }
+  }
+
+  void getBase64() {
+    final bytes = File(imageFile!.path).readAsBytesSync();
+    base64Image =  "data:image/png;base64,"+base64Encode(bytes);
+  }
+
 
 }

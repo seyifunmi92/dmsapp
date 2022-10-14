@@ -28,6 +28,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:modal_progress_hud_alt/modal_progress_hud_alt.dart';
 import 'package:nb_utils/nb_utils.dart';
 import 'package:provider/provider.dart';
 
@@ -35,11 +36,10 @@ import '../../blocs/cart_bloc.dart';
 import '../../layout/loading_indicator_widget.dart';
 import '../../model/cart_item_model.dart';
 import '../../network/network_utils.dart';
+import '../../utils/animate_controller.dart';
 
 class Checkout extends StatefulWidget {
-  int total;
-  int cartTotal;
-  Checkout(this.total, this.cartTotal);
+
 
   @override
   _CheckoutState createState() => _CheckoutState();
@@ -54,6 +54,8 @@ class _CheckoutState extends State<Checkout> {
 
   bool isLoading = false;
   List<CartItem> shoppingCarts = [];
+  double totalAmount = 0;
+  int totalQuantity = 0;
 
 
 
@@ -62,6 +64,27 @@ class _CheckoutState extends State<Checkout> {
     checklist("Bag of Sugar"),
     checklist("Bag of Rice"),
   ];
+
+
+  addCost() async {
+    totalAmount = 0;
+    totalQuantity = 0;
+
+    shoppingCarts.forEach((element) {
+      totalAmount += element.product!.price! * element.quantity!;
+      totalQuantity += element.quantity!.toInt();
+    });
+    setState(() {});
+    // return totalAmount;
+  }
+
+  @override
+  void initState() {
+    getAllCartItem();
+    // TODO: implement initState
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     double _width = MediaQuery.of(context).size.width;
@@ -69,269 +92,316 @@ class _CheckoutState extends State<Checkout> {
     var containerwidth = _width * .85;
     var containerheight = _height * .32;
 
-    addCost() async {
-      int sum = 0;
-      for (var i = 0; i < shoppingCarts.length; i++) {
-        sum += shoppingCarts[i].product!.price!;
-      }
-
-      return sum;
-    }
     var formatter = NumberFormat("#,###,000");
-    return Scaffold(
-      backgroundColor: appWhite,
-      appBar: dmsAppBar(context, ""),
-      body: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: Column(children: [
-          SizedBox(
-            height: _height * .018,
-          ),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: _width * .075),
-            child: Row(
-              children: [
-                Text(
-                  "Checkout",
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600,
-                    fontSize: _height * .02814,
-                    color: appColorPrimary,
-                  ),
-                ),
-              ],
+    return ModalProgressHUD(
+      inAsyncCall: isLoading,
+      progressIndicator: AnimateWidget(),
+      child: Scaffold(
+        backgroundColor: appWhite,
+        appBar: dmsAppBar(context, ""),
+        body: SingleChildScrollView(
+          scrollDirection: Axis.vertical,
+          child: Column(children: [
+            SizedBox(
+              height: _height * .018,
             ),
-          ),
-          SizedBox(height: _height * .014),
-          shoppingCarts.isEmpty ? LoadingIndicatorWidget() : Container(),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: _width * .075),
-            child: Container(
-              decoration: BoxDecoration(
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurStyle: BlurStyle.outer,
-                    blurRadius: 10,
-                    spreadRadius: 0,
-                    offset: Offset.zero,
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: _width * .075),
+              child: Row(
+                children: [
+                  Text(
+                    "Checkout",
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600,
+                      fontSize: _height * .02814,
+                      color: appColorPrimary,
+                    ),
                   ),
                 ],
-                color: appWhite,
               ),
-              // color: appWhite,
-              height: _height * .3565,
-              width: _width * .85,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(_width * .04, _height * .012,
-                        _width * .04, _height * .012),
-                    child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+            ),
+            SizedBox(height: _height * .014),
+            shoppingCarts.isEmpty ? LoadingIndicatorWidget() : Container(),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: _width * .075),
+              child: Container(
+                decoration: BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurStyle: BlurStyle.outer,
+                      blurRadius: 10,
+                      spreadRadius: 0,
+                      offset: Offset.zero,
+                    ),
+                  ],
+                  color: appWhite,
+                ),
+                // color: appWhite,
+                height: _height * .3565,
+                width: _width * .85,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(_width * .04, _height * .012,
+                          _width * .04, _height * .012),
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Products",
+                              style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: _height * .0211,
+                                  color: Color(0xff333542)),
+                            ),
+                            SizedBox(
+                              height: _height * .0059,
+                            ),
+                            ...shoppingCarts.map(
+                                    (e) => itemListName(e.product!.name!, e.quantity!, _height))
+                            // Text(
+                            //   myTitle[0].title,
+                            //   style: GoogleFonts.poppins(
+                            //     fontSize: _height * .019,
+                            //     fontWeight: FontWeight.w300,
+                            //     color: Color(0xff7A7C85),
+                            //   ),
+                            // ),
+                            // SizedBox(height: _height * .004),
+                            // Text(
+                            //   myTitle[1].title,
+                            //   style: GoogleFonts.poppins(
+                            //     fontSize: _height * .019,
+                            //     fontWeight: FontWeight.w300,
+                            //     color: Color(0xff7A7C85),
+                            //   ),
+                            // ),
+                            // SizedBox(height: _height * .004),
+                            // Text(
+                            //   myTitle[2].title,
+                            //   style: GoogleFonts.poppins(
+                            //     fontSize: _height * .019,
+                            //     fontWeight: FontWeight.w300,
+                            //     color: Color(0xff7A7C85),
+                            //   ),
+                            // ),
+                          ]),
+                    ),
+                    SizedBox(
+                      height: _height * .0188,
+                    ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: _width * .05),
+                      child: DottedLine(
+                        dashColor: Color(0xffcbcbcb).withOpacity(0.6),
+                      ),
+                    ),
+                    // Padding(
+                    //   padding: EdgeInsets.symmetric(horizontal: _width * .05),
+                    //   child: Divider(
+                    //     height: _height * .01,
+                    //     color: Color(0xffCBCBCB),
+                    //   ),
+                    // ),
+                    SizedBox(height: _height * .0234),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: _width * .05),
+                      child: Text(
+                        "Product Quantity",
+                        style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w600,
+                            fontSize: _height * .0188,
+                            color: Color(0xff333542)),
+                      ),
+                    ),
+                    SizedBox(height: _height * .003),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: _width * .05),
+                      child: Text(
+                        shoppingCarts.length.toString(),
+                        style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w300,
+                            fontSize: _height * .0188,
+                            color: Color(0xff333542)),
+                      ),
+                    ),
+                    SizedBox(
+                      height: _height * .0188,
+                    ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: _width * .05),
+                      child: DottedLine(
+                        dashColor: Color(0xffcbcbcb).withOpacity(0.6),
+                      ),
+                    ),
+                    // Padding(
+                    //   padding: EdgeInsets.symmetric(horizontal: _width * .05),
+                    //   child: Divider(
+                    //     height: _height * .01,
+                    //     color: Color(0xffCBCBCB),
+                    //   ),
+                    // ),
+                    SizedBox(height: _height * .0188),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: _width * .05),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            "Products",
+                            "Total Price",
                             style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.w600,
-                                fontSize: _height * .0211,
-                                color: Color(0xff333542)),
+                                fontWeight: FontWeight.w400,
+                                fontSize: _height * .0188,
+                                color: Color(0xff7A7C85)),
                           ),
-                          SizedBox(
-                            height: _height * .0059,
-                          ),
-                          ...shoppingCarts.map(
-                                  (e) => itemListName(e.product!.name!, _height))
-                          // Text(
-                          //   myTitle[0].title,
-                          //   style: GoogleFonts.poppins(
-                          //     fontSize: _height * .019,
-                          //     fontWeight: FontWeight.w300,
-                          //     color: Color(0xff7A7C85),
-                          //   ),
-                          // ),
-                          // SizedBox(height: _height * .004),
-                          // Text(
-                          //   myTitle[1].title,
-                          //   style: GoogleFonts.poppins(
-                          //     fontSize: _height * .019,
-                          //     fontWeight: FontWeight.w300,
-                          //     color: Color(0xff7A7C85),
-                          //   ),
-                          // ),
-                          // SizedBox(height: _height * .004),
-                          // Text(
-                          //   myTitle[2].title,
-                          //   style: GoogleFonts.poppins(
-                          //     fontSize: _height * .019,
-                          //     fontWeight: FontWeight.w300,
-                          //     color: Color(0xff7A7C85),
-                          //   ),
-                          // ),
-                        ]),
-                  ),
-                  SizedBox(
-                    height: _height * .0188,
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: _width * .05),
-                    child: DottedLine(
-                      dashColor: Color(0xffcbcbcb).withOpacity(0.6),
-                    ),
-                  ),
-                  // Padding(
-                  //   padding: EdgeInsets.symmetric(horizontal: _width * .05),
-                  //   child: Divider(
-                  //     height: _height * .01,
-                  //     color: Color(0xffCBCBCB),
-                  //   ),
-                  // ),
-                  SizedBox(height: _height * .0234),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: _width * .05),
-                    child: Text(
-                      "Product Quantity",
-                      style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w600,
-                          fontSize: _height * .0188,
-                          color: Color(0xff333542)),
-                    ),
-                  ),
-                  SizedBox(height: _height * .003),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: _width * .05),
-                    child: Text(
-                      shoppingCarts.length.toString(),
-                      style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w300,
-                          fontSize: _height * .0188,
-                          color: Color(0xff333542)),
-                    ),
-                  ),
-                  SizedBox(
-                    height: _height * .0188,
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: _width * .05),
-                    child: DottedLine(
-                      dashColor: Color(0xffcbcbcb).withOpacity(0.6),
-                    ),
-                  ),
-                  // Padding(
-                  //   padding: EdgeInsets.symmetric(horizontal: _width * .05),
-                  //   child: Divider(
-                  //     height: _height * .01,
-                  //     color: Color(0xffCBCBCB),
-                  //   ),
-                  // ),
-                  SizedBox(height: _height * .0188),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: _width * .05),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
+
                         Text(
-                          "Total Price",
+                          "\N${formatter.format(totalAmount)}",
                           style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w400,
-                              fontSize: _height * .0188,
-                              color: Color(0xff7A7C85)),
+                              fontSize: _height * .023,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xff27AE60)),
                         ),
 
-                        FutureBuilder(
-                          future: addCost(),
-                          builder: (context, snapshot) {
-                            if (snapshot.hasData) {
-                              var _total = snapshot.data!;
-                              return Text(
-                                "\N${formatter.format(_total)}.00",
-                                style: GoogleFonts.poppins(
-                                    fontSize: _height * .023,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xff27AE60)),
-                              );
-                            } else {
-                              return CircularProgressIndicator();
-                            }
-                          },
-                        ),
+                          // FutureBuilder(
+                          //   future: addCost(),
+                          //   builder: (context, snapshot) {
+                          //     if (snapshot.hasData) {
+                          //       var _total = snapshot.data!;
+                          //       return Text(
+                          //         "\N${formatter.format(totalAmount)}.00",
+                          //         style: GoogleFonts.poppins(
+                          //             fontSize: _height * .023,
+                          //             fontWeight: FontWeight.w700,
+                          //             color: Color(0xff27AE60)),
+                          //       );
+                          //     } else {
+                          //       return CircularProgressIndicator();
+                          //     }
+                          //   },
+                          // ),
 
-                        // Text(
-                        //   "N${formatter.format(widget.total)}.00",
-                        //   style: GoogleFonts.poppins(
-                        //       fontSize: _height * .023,
-                        //       fontWeight: FontWeight.w700,
-                        //       color: Color(0xff27AE60)),
-                        // ),
-                      ],
+                          // Text(
+                          //   "N${formatter.format(widget.total)}.00",
+                          //   style: GoogleFonts.poppins(
+                          //       fontSize: _height * .023,
+                          //       fontWeight: FontWeight.w700,
+                          //       color: Color(0xff27AE60)),
+                          // ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          SizedBox(
-            height: _height * .35,
-          ),
-          FutureBuilder(
-            future: addCost(),
-            builder: (context, snapshot) {
-      if (snapshot.hasData) {
-      var _total = snapshot.data!;
-      return Padding(
-        padding: EdgeInsets.symmetric(horizontal: _width * .05),
-        child: Row(children: [
-          Center(
-            child: InkWell(
-              onTap: () {
-                processCheckout(int.parse(_total.toString()));
-              },
-              child: Container(
-                height: _height * .0633,
-                width: _width * .9,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(0),
-                  color: appColorPrimary,
-                ),
-                child: Center(
-                  child: Text(
-                    "Schedule Delivery",
-                    style: GoogleFonts.poppins(
-                      color: appWhite,
-                      fontWeight: FontWeight.w600,
-                      fontSize: _height * .017,
-                    ),
-                  ),
+                  ],
                 ),
               ),
             ),
-          ),
-        ]),
-      );
-    }else {
-        return CircularProgressIndicator();
-      }
-            }
-          ),
+            SizedBox(
+              height: _height * .35,
+            ),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: _width * .05),
+              child: Row(children: [
+                Center(
+                  child: InkWell(
+                    onTap: () {
+                      processCheckout(totalAmount);
+                    },
+                    child: Container(
+                      height: _height * .0633,
+                      width: _width * .9,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(0),
+                        color: appColorPrimary,
+                      ),
+                      child: Center(
+                        child: Text(
+                          "Schedule Delivery",
+                          style: GoogleFonts.poppins(
+                            color: appWhite,
+                            fontWeight: FontWeight.w600,
+                            fontSize: _height * .017,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ]),
+            ),
+      //       FutureBuilder(
+      //         future: addCost(),
+      //         builder: (context, snapshot) {
+      //   if (snapshot.hasData) {
+      //   var _total = snapshot.data!;
+      //   return Padding(
+      //     padding: EdgeInsets.symmetric(horizontal: _width * .05),
+      //     child: Row(children: [
+      //       Center(
+      //         child: InkWell(
+      //           onTap: () {
+      //             processCheckout(int.parse(_total.toString()));
+      //           },
+      //           child: Container(
+      //             height: _height * .0633,
+      //             width: _width * .9,
+      //             decoration: BoxDecoration(
+      //               borderRadius: BorderRadius.circular(0),
+      //               color: appColorPrimary,
+      //             ),
+      //             child: Center(
+      //               child: Text(
+      //                 "Schedule Delivery",
+      //                 style: GoogleFonts.poppins(
+      //                   color: appWhite,
+      //                   fontWeight: FontWeight.w600,
+      //                   fontSize: _height * .017,
+      //                 ),
+      //               ),
+      //             ),
+      //           ),
+      //         ),
+      //       ),
+      //     ]),
+      //   );
+      // }else {
+      //     return CircularProgressIndicator();
+      //   }
+      //         }
+      //       ),
 
 
-        ]),
+          ]),
+        ),
       ),
     );
   }
 
 
-  Widget itemListName(String name, double _height){
+  Widget itemListName(String name, double qty, double _height){
     return Padding(
       padding: EdgeInsets.only(bottom: _height * .004),
-      child: Text(
-        name,
-        style: GoogleFonts.poppins(
-          fontSize: _height * .019,
-          fontWeight: FontWeight.w300,
-          color: Color(0xff7A7C85),
-        ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            name,
+            style: GoogleFonts.poppins(
+              fontSize: _height * .019,
+              fontWeight: FontWeight.w300,
+              color: Color(0xff7A7C85),
+            ),
+          ),
+          Text(
+            qty.toString(),
+            style: GoogleFonts.poppins(
+              fontSize: _height * .019,
+              fontWeight: FontWeight.w300,
+              color: Color(0xff7A7C85),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -355,6 +425,7 @@ class _CheckoutState extends State<Checkout> {
           setState(() {
             shoppingCarts = newdata!.map((m) => CartItem.fromJson(m)).toList();
             isLoading = false;
+            addCost();
           });
         }
       }
@@ -367,22 +438,26 @@ class _CheckoutState extends State<Checkout> {
   }
 
   void processCheckout(_total) async {
+    final CartBloc cb = Provider.of<CartBloc>(context, listen: false);
+    final baseUrl = cb.cartBaseUrl;
     try {
 
       setState(() {
         isLoading = true;
       });
       Map req = {"channelCode": "Mobile"};
-      var response = await postRequestWithToken('https://dms-order-ms.azurewebsites.net/api/order/cart/checkout', req);
+      var response = await postRequestWithToken('$baseUrl/order/cart/checkout', req);
 
       if (this.mounted) {
         if (response.statusCode == 200) {
           var decodedData = jsonDecode(response.body);
-          int newdata = decodedData["data"]["dmsOrder"]["dmsOrderId"];
+          String newdata = decodedData["data"]["dmsOrder"];
           setState(() {
             isLoading = false;
           });
-          nextScreen(context, Schedule(int.parse(_total.toString()), shoppingCarts.length, newdata));
+          toast(decodedData["message"], length: Toast.LENGTH_LONG);
+
+          nextScreen(context, Schedule(int.tryParse(totalAmount.toString()), shoppingCarts.length, newdata.toInt(), shoppingCarts));
 
         }
       }

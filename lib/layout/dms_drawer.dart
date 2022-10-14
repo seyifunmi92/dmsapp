@@ -24,7 +24,7 @@ import '../utils/images.dart';
 
 class DMSDrawerItem {
   final String title;
-  final Function page;
+  final Widget page;
   final String icon;
   final String iconred;
 
@@ -41,21 +41,21 @@ class DMSDrawer extends StatefulWidget {
 class _DMSDrawerState extends State<DMSDrawer> {
   static final List<DMSDrawerItem> drawerItems = [
     DMSDrawerItem('Dashboard', "lib/assets/dash.png", "lib/assets/navbar.png",
-        () => DashBoard()),
+         DashBoard()),
     DMSDrawerItem('My Orders', "lib/assets/navbar1.png", "lib/assets/order.png",
-        () => MyOrders()),
+         MyOrders()),
     // DMSDrawerItem('My ATC', "lib/assets/navbar2.png", "lib/assets/atc.png",
     //     () => MyATCSelectBusiness()),
     DMSDrawerItem('My Wallet', "lib/assets/navbar3.png",
-        "lib/assets/wallet.png", () => MyWallet()),
+        "lib/assets/wallet.png",  MyWallet()),
     DMSDrawerItem('Products', "lib/assets/navbar6.png",
-        "lib/assets/product.png", () => SelectCompany()),
+        "lib/assets/product.png",  SelectCompany()),
     DMSDrawerItem('Cart', "lib/assets/navbar1.png", "lib/assets/order.png",
-        () => Carts()),
+        Carts()),
     DMSDrawerItem('Support', "lib/assets/navbar7.png", "lib/assets/support.png",
-        () => SupportItem()),
+         SupportItem()),
     DMSDrawerItem('FAQ', "lib/assets/navbar8.png", "lib/assets/faq.png",
-        () => FAQCategories()),
+        FAQCategories()),
     // DMSDrawerItem('Logout', "lib/assets/logout.png", "lib/assets/logout.png",
     //     () => logOut()),
   ];
@@ -289,18 +289,18 @@ class _DMSDrawerState extends State<DMSDrawer> {
             return GestureDetector(
               onTap: () {
                 // Navigator.pop(context);
-                finish(context);
+                // finish(context);
                 DmsAppRoot.of(context)!.setSelected(index);
-                // nextScreenCloseOthers(context, item.page);
+                nextScreenCloseOthers(context, item.page);
 
-                Navigator.push(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder: (context, anim1, anim2) => item.page(),
-                      transitionsBuilder: (context, anim1, anim2, child) =>
-                          FadeTransition(opacity: anim1, child: child),
-                      transitionDuration: Duration(milliseconds: 200),
-                    ));
+                // Navigator.push(
+                //     context,
+                //     PageRouteBuilder(
+                //       pageBuilder: (context, anim1, anim2) => item.page(),
+                //       transitionsBuilder: (context, anim1, anim2, child) =>
+                //           FadeTransition(opacity: anim1, child: child),
+                //       transitionDuration: Duration(milliseconds: 200),
+                //     ));
               },
               child: SizedBox(
                 height: _height * .082,

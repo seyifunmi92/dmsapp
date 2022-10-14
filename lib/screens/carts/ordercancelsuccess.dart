@@ -16,6 +16,7 @@ import 'package:dms/screens/products/productDetails.dart';
 import 'package:dms/splashscreen/splashscreen.dart';
 import 'package:dms/screens/support/new_support_request.dart';
 import 'package:dms/utils/colors.dart';
+import 'package:dms/utils/next_screen.dart';
 import 'package:dms/utils/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -35,8 +36,7 @@ class _OrderCancelState extends State<OrderCancel> {
   Widget build(BuildContext context) {
     double _width = MediaQuery.of(context).size.width;
     double _height = MediaQuery.of(context).size.height;
-    // final _screenWidth = MediaQuery.of(context).size.width;
-    // final _screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       appBar: dmsAppBar(context, '', showBack: true),
       body: SingleChildScrollView(
@@ -98,7 +98,7 @@ class _OrderCancelState extends State<OrderCancel> {
             SizedBox(height: _height * .2),
             InkWell(
               onTap: () {
-                Navigator.pop(context);
+                nextScreenReplace(context, DashBoard());
               },
               child: Container(
                 width: _width * .85,

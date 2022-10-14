@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 
 import '../../blocs/product_bloc.dart';
 import '../../layout/loading_indicator_widget.dart';
+import '../../layout/search_product_delegate.dart';
 import '../../model/product_model.dart';
 import '../../network/network_utils.dart';
 import '../../utils/animate_loader.dart';
@@ -45,8 +46,11 @@ class _ProductsState extends State<Products> {
   var deliveryAddressNode = FocusNode();
   List<Product> allProduct = [];
   bool isLoading = false;
-  bool isLoadingMore = false;
+  bool isLoadingMore = true;
+  int _numberOfPostsPerRequest = 10;
   int page = 1;
+  ScrollController _scrollController = ScrollController();
+  // final SearchProductDelegate _searchDelegate = SearchProductDelegate();
 
   List<productItems> myproducts = [
     productItems(
@@ -94,6 +98,13 @@ class _ProductsState extends State<Products> {
   }
 
   @override
+  void dispose() {
+    _scrollController.dispose();
+    // TODO: implement dispose
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     double _screenWidth = MediaQuery.of(context).size.width;
     double _screenHeight = MediaQuery.of(context).size.height;
@@ -129,40 +140,104 @@ class _ProductsState extends State<Products> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                GestureDetector(
-                  onTap: () {},
-                  child: Container(
-                    decoration: BoxDecoration(
-                        color: inputBackgroundColor,
-                        border: Border.all(
-                            color: inputBorderColor,
-                            width: 1,
-                            style: BorderStyle.solid)),
-                    height: 50,
-                    width: _screenWidth * 0.90,
-                    padding: EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.search_sharp,
-                              color: Color(0xffB7BBC5),
-                              size: 30,
-                            ),
-                            mypadr,
-                            Text(
-                              "Search Product",
-                              style: GoogleFonts.poppins(
-                                  color: iconColorSecondary,
-                                  fontSize: textSizeSMedium),
-                              textAlign: TextAlign.start,
-                            ),
-                          ],
+                // GestureDetector(
+                //   onTap: () {},
+                //   child: Container(
+                //     decoration: BoxDecoration(
+                //         color: inputBackgroundColor,
+                //         border: Border.all(
+                //             color: inputBorderColor,
+                //             width: 1,
+                //             style: BorderStyle.solid)),
+                //     height: 50,
+                //     width: _screenWidth * 0.90,
+                //     padding: EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                //     child: Row(
+                //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                //       children: [
+                //         Row(
+                //           children: [
+                //             Icon(
+                //               Icons.search_sharp,
+                //               color: Color(0xffB7BBC5),
+                //               size: 30,
+                //             ),
+                //             mypadr,
+                //             Text(
+                //               "Search Product",
+                //               style: GoogleFonts.poppins(
+                //                   color: iconColorSecondary,
+                //                   fontSize: textSizeSMedium),
+                //               textAlign: TextAlign.start,
+                //             ),
+                //           ],
+                //         ),
+                //       ],
+                //     ),
+                //   ),
+                // ),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: _screenWidth * .04),
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () async {
+                          await showSearch<int>(context: context, delegate: SearchProductDelegate(widget.companyCode!));
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                              color: inputBackgroundColor,
+                              border: Border.all(
+                                  color: inputBorderColor,
+                                  width: 1,
+                                  style: BorderStyle.solid)),
+                          height: _screenHeight * .0533,
+                          width: _screenWidth * 0.9,
+                          padding: EdgeInsets.only(
+                              left: _screenWidth * .05, top: _screenHeight * .006),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Icons.search_rounded,
+                                color: Color(0xffB7BBC5),
+                                size: _screenHeight * .0313,
+                              ),
+                              Padding(
+                                padding: EdgeInsets.only(left: _screenWidth * 0.01),
+                                child: Text(
+                                  "Search Products",
+                                  style: GoogleFonts.poppins(
+                                    color: Color(0xffB7BBC5),
+                                    fontWeight: FontWeight.w400,
+                                    fontSize: _screenHeight * .014,
+                                  ),
+                                  textAlign: TextAlign.start,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ],
-                    ),
+                      ),
+                      // InkWell(
+                      //   onTap: () {
+                      //     showDialog(
+                      //         context: context,
+                      //         builder: (BuildContext context) {
+                      //           return _filterDialog(context);
+                      //         });
+                      //   },
+                      //   child: Container(
+                      //     color: appColorPrimary,
+                      //     height: _screenHeight * .0569,
+                      //     width: _screenWidth * .1205,
+                      //     child: Image.asset(
+                      //       "lib/assets/new.png",
+                      //       height: _screenHeight * 0.019,
+                      //     ),
+                      //   ),
+                      // ),
+                    ],
                   ),
                 ),
                 SizedBox(
@@ -175,11 +250,24 @@ class _ProductsState extends State<Products> {
 
           Expanded(
               child: ListView.builder(
+                controller: _scrollController,
             itemCount: allProduct.length,
             itemBuilder: (BuildContext context, int index) {
               var mywidth = _screenWidth * .9;
               var myheight = _screenHeight * .19;
-               if(index < allProduct.length) {
+
+              _scrollController.addListener(() {
+// nextPageTrigger will have a value equivalent to 80% of the list size.
+                var nextPageTrigger = 0.8 * _scrollController.position.maxScrollExtent;
+
+// _scrollController fetches the next paginated data when the current postion of the user on the screen has surpassed
+                if (_scrollController.position.pixels > nextPageTrigger && isLoadingMore == true) {
+                  isLoading = true;
+                  loadProducts(page++);
+                }
+              });
+
+               if(index < allProduct.length || index == allProduct.length) {
                 var _productList = allProduct[index];
                 return InkWell(
                   onTap: () {
@@ -188,13 +276,7 @@ class _ProductsState extends State<Products> {
                         MaterialPageRoute(
                             builder: (context) =>
                                 ProductDetails(
-                                  _productList.productId!,
-                                  "lib/assets/dangotebig.png",
-                                  _productList.name!,
-                                  _productList.name!,
-                                  "SAP1234353",
-                                  _productList.description!,
-                                  24800,
+                                  _productList.productId!
                                 )));
                   },
                   child: Padding(
@@ -221,54 +303,69 @@ class _ProductsState extends State<Products> {
                       child: Padding(
                         padding: EdgeInsets.all(_screenWidth * .03),
                         child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
-                              Image.asset(
-                                "lib/assets/dangotebig.png",
-                                height: _screenHeight * .121,
-                                width: _screenWidth * .18,
+                              _productList.primaryProductImageUrl == null ? Align(
+                                alignment: Alignment.centerLeft,
+                                child: Image.asset(
+                                  "lib/assets/dangotebig.png",
+                                  height: _screenHeight * .121,
+                                  width: _screenWidth * .18,
+                                ),
+                              ) : Align(
+                                alignment: Alignment.centerLeft,
+                                child: Image.network(
+                                    _productList.primaryProductImageUrl!,
+                                  height: _screenHeight * .121,
+                                  width: _screenWidth * .18,
+                                ),
                               ),
-                              Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    mypadh,
-                                    Text(
-                                      _productList.name!,
-                                      style: GoogleFonts.openSans(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: _screenHeight * .02,
-                                        color: Color(0xff343434),
+                              Padding(
+                                padding: EdgeInsets.only(left: _screenWidth * .06,),
+                                child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      mypadh,
+                                      Text(
+                                        _productList.name!,
+                                        style: GoogleFonts.openSans(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: _screenHeight * .02,
+                                          color: Color(0xff343434),
+                                        ),
                                       ),
-                                    ),
-                                    SizedBox(height: _screenHeight * .0023),
-                                    Text(
-                                      "SAP1234353",
-                                      style: GoogleFonts.openSans(
-                                        fontWeight: FontWeight.w400,
-                                        fontSize: _screenHeight * .015,
-                                        color: Color(0xff8F9090),
+                                      mypadh,
+                                      SizedBox(height: _screenHeight * .0023),
+                                      Text(
+                                        "SAP1234353",
+                                        style: GoogleFonts.openSans(
+                                          fontWeight: FontWeight.w400,
+                                          fontSize: _screenHeight * .015,
+                                          color: Color(0xff8F9090),
+                                        ),
                                       ),
-                                    ),
-                                    mypadh,
-                                    Text(
-                                      _productList.description!,
-                                      style: GoogleFonts.openSans(
-                                        fontWeight: FontWeight.w400,
-                                        fontSize: _screenHeight * .012,
-                                        color: Color(0xff8F9090),
+                                      mypadh,
+                                      mypadh,
+                                      Text(
+                                        _productList.description!,
+                                        style: GoogleFonts.openSans(
+                                          fontWeight: FontWeight.w400,
+                                          fontSize: _screenHeight * .012,
+                                          color: Color(0xff8F9090),
+                                        ),
+                                        softWrap: true,
                                       ),
-                                    ),
-                                    mypadh,
-                                    Text(
-                                      // "N${_productList.amount}",
-                                      "\N24,800",
-                                      style: GoogleFonts.openSans(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: _screenHeight * .015,
-                                        color: Color(0xff27AE60),
-                                      ),
-                                    ),
-                                  ]),
+                                      mypadh,
+                                      // Text(
+                                      //   // "N${_productList.amount}",
+                                      //   "\N24,800",
+                                      //   style: GoogleFonts.openSans(
+                                      //     fontWeight: FontWeight.w700,
+                                      //     fontSize: _screenHeight * .015,
+                                      //     color: Color(0xff27AE60),
+                                      //   ),
+                                      // ),
+                                    ]),
+                              ),
                             ]),
                       ),
                     ),
@@ -282,7 +379,154 @@ class _ProductsState extends State<Products> {
             },
           )),
           // LoadingIndicatorWidget()
+          isLoading ? Align(alignment: Alignment.bottomCenter,child: CircularProgressIndicator()) : Container(),
         ],
+      ),
+    );
+  }
+
+  Widget _filterDialog(BuildContext context) {
+    double _width = MediaQuery.of(context).size.width;
+    double _height = MediaQuery.of(context).size.height;
+    var containerheight = _height * .354;
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: appWhite,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        height: containerheight,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.vertical,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+                _width * .06, _height * .037, _width * .06, _height * .037),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Filter Products",
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600,
+                        fontSize: _height * .0284,
+                        color: appColorPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(
+                  height: _height * .023,
+                ),
+                GestureDetector(
+                  onTap: () {},
+                  child: Container(
+                    decoration: BoxDecoration(
+                        color: inputBackgroundColor,
+                        border: Border.all(
+                            color: inputBorderColor,
+                            width: 1,
+                            style: BorderStyle.solid)),
+                    height: _height * .0533,
+                    width: _width,
+                    // padding: EdgeInsets.symmetric(horizontal: _width *.04),
+                    child: Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: _width * .04),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Product Type",
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w400,
+                                fontSize: _height * .0166,
+                                color: Color(0xffB1BBC6),
+                              ),
+                            ),
+                            Icon(
+                              Icons.calendar_month,
+                              color: Color(0xff999999),
+                              size: _height * .025,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: _height * .018,
+                ),
+                GestureDetector(
+                  onTap: () {},
+                  child: Container(
+                    decoration: BoxDecoration(
+                        color: inputBackgroundColor,
+                        border: Border.all(
+                            color: inputBorderColor,
+                            width: 1,
+                            style: BorderStyle.solid)),
+                    height: _height * .0533,
+                    width: _width,
+                    child: Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: _width * .04),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Specification",
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w400,
+                                fontSize: _height * .0166,
+                                color: Color(0xffB1BBC6),
+                              ),
+                            ),
+                            Icon(
+                              Icons.arrow_drop_down,
+                              color: Color(0xff999999),
+                              size: _height * .0296,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: _height * .022,
+                ),
+                InkWell(
+                  onTap: () {
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    width: _width,
+                    height: _height * .0633,
+                    decoration: BoxDecoration(
+                      color: appColorPrimary,
+                    ),
+                    child: Center(
+                        child: Text(
+                          "Set Filter",
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: _height * .016,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        )),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -298,12 +542,18 @@ class _ProductsState extends State<Products> {
         if (response.statusCode == 200) {
           var decodedData = jsonDecode(response.body);
           List? newdata = decodedData["data"]["items"];
+          if(newdata!.length < 10){
+            isLoadingMore = false;
+          }
           setState(() {
-            allProduct.addAll(newdata!.map((m) => Product.fromJson(m)).toList());
+            isLoading = false;
+            allProduct.addAll(newdata.map((m) => Product.fromJson(m)).toList());
           });
         }
       }
-    } on SocketException {
+    } catch (e) {
+      isLoading = false;
+      print(e.toString());
       throw 'No Internet connection';
     }
 

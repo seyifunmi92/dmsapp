@@ -55,7 +55,8 @@ class _AnimatedLoaderState extends State<AnimatedLoader> with SingleTickerProvid
                     height: 70,
                     fit: BoxFit.contain,
                   ),
-                )),
+                ),
+            ),
           ),
           Positioned(
             top: height * .415,

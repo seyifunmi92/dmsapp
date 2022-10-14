@@ -14,8 +14,9 @@ import 'myorders2.dart';
 
 class NewOrders extends StatefulWidget {
   String sapNumber;
+  String accountType;
 
-  NewOrders(this.sapNumber);
+  NewOrders(this.sapNumber, this.accountType);
 
   @override
   _NewOrdersState createState() => _NewOrdersState();
@@ -24,17 +25,20 @@ class NewOrders extends StatefulWidget {
 class _NewOrdersState extends State<NewOrders> {
   @override
   void initState() {
+    print(widget.accountType);
     print(widget.sapNumber);
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
+    widget.accountType == "CC"
+        ? Provider.of<OrderBloc>(context, listen: false).isBG = false
+        : Provider.of<OrderBloc>(context, listen: false).isBG = true;
+
     return Scaffold(
       backgroundColor: appWhite,
-      //key: _scaffoldKey,
       appBar: dmsAppBar(context, ""),
-
       drawer: DMSDrawer(),
       body: _body(context),
     );
@@ -220,7 +224,8 @@ class _NewOrdersState extends State<NewOrders> {
                         builder: (context) => MyOrders2(
                             Provider.of<OrderBloc>(context, listen: false)
                                 .statusSubmitted,
-                            widget.sapNumber)));
+                            widget.sapNumber,
+                            widget.accountType)));
               },
               child: Container(
                 decoration: BoxDecoration(

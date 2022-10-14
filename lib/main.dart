@@ -5,6 +5,7 @@ import 'package:dms/blocs/country_bloc.dart';
 import 'package:dms/blocs/login_bloc.dart';
 import 'package:dms/blocs/product_bloc.dart';
 import 'package:dms/constant.dart';
+import 'package:dms/services/faqservices.dart';
 import 'package:dms/services/orderservices.dart';
 import 'package:dms/splashscreen/splashscreen.dart';
 import 'package:dms/utils/theme.dart';
@@ -12,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'blocs/cart_bloc.dart';
+import 'blocs/support_request_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,6 +27,7 @@ void main() async {
 }
 
 class DmsAppRoot extends StatefulWidget {
+  static final navKey = GlobalKey<NavigatorState>();
   static final ValueNotifier<ThemeMode> themeNotifier =
       ValueNotifier(ThemeMode.light);
 
@@ -58,9 +61,13 @@ class _DmsAppRootState extends State<DmsAppRoot> {
               ChangeNotifierProvider<OrderBloc>(
                   create: (context) => OrderBloc()),
               ChangeNotifierProvider<CartBloc>(create: (context) => CartBloc()),
+              ChangeNotifierProvider<FaqBloc>(create: (context) => FaqBloc()),
+              ChangeNotifierProvider<SupportRequestBloc>(
+                  create: (context) => SupportRequestBloc()),
             ],
             child: MaterialApp(
               // Remove the debug banner
+              navigatorKey: DmsAppRoot.navKey,
               debugShowCheckedModeBanner: false,
               title: dmsTitle,
               theme: AppThemeData.lightTheme,

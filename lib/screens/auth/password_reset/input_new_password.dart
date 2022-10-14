@@ -139,7 +139,7 @@ class _InputNewPasswordState extends State<InputNewPassword> {
                             color: appColorPrimary,
                             fontFamily: fontRegular,
                             fontSize: textSizeMedium),
-                        controller: passwordCont,
+                        controller: confirmPasswordCont,
                         textCapitalization: TextCapitalization.words,
                         decoration: InputDecoration(
                             suffixIcon: IconButton(
@@ -177,6 +177,7 @@ class _InputNewPasswordState extends State<InputNewPassword> {
                         focusNode: confirmPasswordNode,
                         validator: (s) {
                           if (s!.isEmpty) return 'Password Confirmation is required';
+                          if (s != passwordCont.text) return 'Password does not match';
                           return null;
                         },
                       ),

@@ -4,7 +4,9 @@ import 'dart:io';
 import 'package:dms/layout/appWidget.dart';
 import 'package:dms/layout/dms_drawer.dart';
 import 'package:dms/screens/carts/checkout.dart';
+import 'package:dms/screens/carts/emptycart.dart';
 import 'package:dms/utils/colors.dart';
+import 'package:dms/utils/next_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -39,16 +41,13 @@ class _CartsState extends State<Carts> {
     final baseUrl = cb.cartBaseUrl;
     print(baseUrl);
     try {
-      Map req = {"shoppingCartItemId": item.shoppingCartItemId, "quantity": item.quantity! + 1};
+      Map req = {"shoppingCartItemId": item.shoppingCartItemId, "quantity": item.quantity!};
       var response = await putRequestWithToken('$baseUrl/cart/cartitem/${item.shoppingCartItemId}', req);
 
       if (this.mounted) {
         if (response.statusCode == 200) {
           var decodedData = jsonDecode(response.body);
           toast(decodedData['message'], length: Toast.LENGTH_LONG);
-          setState(() {
-            item.quantity = item.quantity! - 1;
-          });
         }
       }
     } on SocketException {
@@ -58,30 +57,48 @@ class _CartsState extends State<Carts> {
 
   bool isLoading = false;
   List<CartItem> shoppingCarts = [];
-  int subTotal = 0;
-  int totalAmount = 0;
+  int totalQuantity = 0;
+  double totalAmount = 0;
 
   void _decreaseitem(CartItem item) async {
     final CartBloc cb = Provider.of<CartBloc>(context, listen: false);
     final baseUrl = cb.cartBaseUrl;
     print(baseUrl);
     try {
-      Map req = {"shoppingCartItemId": item.shoppingCartItemId, "quantity": item.quantity! - 1};
+      Map req = {"shoppingCartItemId": item.shoppingCartItemId, "quantity": item.quantity!};
       var response = await putRequestWithToken('$baseUrl/cart/cartitem/${item.shoppingCartItemId}', req);
 
       if (this.mounted) {
         if (response.statusCode == 200) {
           var decodedData = jsonDecode(response.body);
           toast(decodedData['message'], length: Toast.LENGTH_LONG);
-          setState(() {
-            item.quantity = item.quantity! - 1;
-          });
+          addCost();
+        }
+      }
+    } catch(e) {
+      throw 'No Internet connection';
+    }
+
+  }
+
+  void _deleteItem(CartItem item) async {
+    final CartBloc cb = Provider.of<CartBloc>(context, listen: false);
+    final baseUrl = cb.cartBaseUrl;
+    print(baseUrl);
+    try {
+      Map req = {"shoppingCartItemId": item.shoppingCartItemId};
+      var response = await deleteRequestWithToken('$baseUrl/cart/cartitem/${item.shoppingCartItemId}', req);
+
+      if (this.mounted) {
+        if (response.statusCode == 200) {
+          var decodedData = jsonDecode(response.body);
+          toast(decodedData['message'], length: Toast.LENGTH_LONG);
+          getAllCartItem();
         }
       }
     } on SocketException {
       throw 'No Internet connection';
     }
-
   }
 
 
@@ -98,7 +115,7 @@ class _CartsState extends State<Carts> {
 
   @override
   void initState() {
-    //addCost();
+    // addCost();
     getAllCartItem();
     super.initState();
   }
@@ -164,133 +181,144 @@ class _CartsState extends State<Carts> {
                 itemCount: shoppingCarts.length,
                 itemBuilder: (BuildContext context, int index) {
                   var mycart = shoppingCarts[index];
-                  return Column(
-                    children: [
-                      InkWell(
-                        onTap: () {},
-                        child: Padding(
-                          padding: EdgeInsets.fromLTRB(_width * .06,
-                              _height * .01, _width * .06, _height * .01),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: appWhite,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black12,
-                                  blurStyle: BlurStyle.outer,
-                                  blurRadius: 10,
-                                  spreadRadius: 0,
-                                  offset: Offset.zero,
-                                ),
-                              ],
-                            ),
-                            width: _width * .9,
-                            height: _height * .17,
-                            child: Padding(
-                              padding: EdgeInsets.all(_width * .02),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Container(
-                                      height: _height * .113,
-                                      width: _width * .164,
-                                      child: Image.asset(
-                                        "lib/assets/dang.png",
-                                        fit: BoxFit.fill,
-                                      )),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Text(
-                                        mycart.product!.name ?? "Product Name",
-                                        style: GoogleFonts.poppins(
-                                          fontSize: _height * .02,
-                                          fontWeight: FontWeight.w600,
-                                          color: Color(0xff343434),
-                                          letterSpacing: 0.04,
-                                        ),
-                                      ),
-                                      SizedBox(height: _height * 0.005),
-                                      Text(
-                                        "N${formatter.format(mycart.product!.price)}.00",
-                                        style: GoogleFonts.poppins(
-                                          fontSize: _height * .017,
-                                          fontWeight: FontWeight.w600,
-                                          color: Color(0xff27AE60),
-                                          letterSpacing: 0.04,
-                                        ),
-                                      ),
-                                      SizedBox(height: _height * 0.02),
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
-                                        children: [
-                                          InkWell(
-                                            onTap: () {
-                                              var qty = mycart.quantity!;
-                                              if (qty <= 1) return;
-                                              var q = qty - 1;
-                                              mycart.quantity = q;
-                                              _decreaseitem(mycart);
-                                              // _bloc.counterEventSink
-                                              //     .add(DecreaseCount2());
-                                            },
-                                            child: Container(
-                                              width: _width * .08,
-                                              height: _height * .04,
-                                              color: Color(0xffE2E3E9),
-                                              child: Center(
-                                                  child: Text(
-                                                "-",
-                                                style: TextStyle(
-                                                  fontSize: _height * 0.018,
-                                                ),
-                                              )),
-                                            ),
+                  return Dismissible(
+                    key: Key(index.toString()),
+                    onDismissed: (direction) {
+                      _deleteItem(mycart);
+                      setState(() {
+                        shoppingCarts.removeAt(index);
+                      });
+                    },
+                    child: Column(
+                      children: [
+                        InkWell(
+                          onTap: () {},
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(_width * .06,
+                                _height * .01, _width * .06, _height * .01),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: appWhite,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black12,
+                                    blurStyle: BlurStyle.outer,
+                                    blurRadius: 10,
+                                    spreadRadius: 0,
+                                    offset: Offset.zero,
+                                  ),
+                                ],
+                              ),
+                              width: _width * .9,
+                              height: _height * .17,
+                              child: Padding(
+                                padding: EdgeInsets.all(_width * .02),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Container(
+                                        height: _height * .113,
+                                        width: _width * .164,
+                                        child: Image.asset(
+                                          "lib/assets/dang.png",
+                                          fit: BoxFit.fill,
+                                        )),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      children: [
+                                        Text(
+                                          mycart.product!.name ?? "Product Name",
+                                          style: GoogleFonts.poppins(
+                                            fontSize: _height * .02,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xff343434),
+                                            letterSpacing: 0.04,
                                           ),
-                                          SizedBox(width: _width * .05),
-                                          Text(
-                                            mycart.quantity.toString(),
-                                            style: GoogleFonts.montserrat(
-                                              fontSize: _height * 0.02,
-                                              fontWeight: FontWeight.w500,
-                                            ),
+                                        ),
+                                        SizedBox(height: _height * 0.005),
+                                        Text(
+                                          "N${formatter.format(mycart.product!.price)}.00",
+                                          style: GoogleFonts.poppins(
+                                            fontSize: _height * .017,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xff27AE60),
+                                            letterSpacing: 0.04,
                                           ),
-                                          SizedBox(width: _width * .05),
-                                          InkWell(
-                                            onTap: () {
-                                              var mainCount = mycart.quantity! + 1;
-                                              mycart.quantity = mainCount;
-                                              _inceaseItem(mycart);
-                                              // _bloc.counterEventSink
-                                              //     .add(IncreaseCount2());
-                                            },
-                                            child: Container(
+                                        ),
+                                        SizedBox(height: _height * 0.02),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.start,
+                                          children: [
+                                            InkWell(
+                                              onTap: () {
+                                                var qty = mycart.quantity!;
+                                                if (qty <= 1) return;
+                                                var q = qty - 1;
+                                                mycart.quantity = q;
+                                                addCost();
+                                                _decreaseitem(mycart);
+                                                // _bloc.counterEventSink
+                                                //     .add(DecreaseCount2());
+                                              },
+                                              child: Container(
                                                 width: _width * .08,
                                                 height: _height * .04,
-                                                color: appColorPrimary,
+                                                color: Color(0xffE2E3E9),
                                                 child: Center(
-                                                  child: Text(
-                                                    "+",
-                                                    style: TextStyle(
-                                                      color: appWhite,
-                                                      fontSize: _height * 0.018,
-                                                    ),
+                                                    child: Text(
+                                                  "-",
+                                                  style: TextStyle(
+                                                    fontSize: _height * 0.018,
                                                   ),
                                                 )),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  )
-                                ],
+                                              ),
+                                            ),
+                                            SizedBox(width: _width * .05),
+                                            Text(
+                                              mycart.quantity.toString(),
+                                              style: GoogleFonts.montserrat(
+                                                fontSize: _height * 0.02,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                            SizedBox(width: _width * .05),
+                                            InkWell(
+                                              onTap: () {
+                                                var mainCount = mycart.quantity! + 1;
+                                                mycart.quantity = mainCount;
+                                                addCost();
+                                                _inceaseItem(mycart);
+                                                // _bloc.counterEventSink
+                                                //     .add(IncreaseCount2());
+                                              },
+                                              child: Container(
+                                                  width: _width * .08,
+                                                  height: _height * .04,
+                                                  color: appColorPrimary,
+                                                  child: Center(
+                                                    child: Text(
+                                                      "+",
+                                                      style: TextStyle(
+                                                        color: appWhite,
+                                                        fontSize: _height * 0.018,
+                                                      ),
+                                                    ),
+                                                  )),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    )
+                                  ],
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   );
                 })),
       ]),
@@ -298,16 +326,18 @@ class _CartsState extends State<Carts> {
     );
   }
 
+  addCost() async {
+    totalAmount = 0;
+    totalQuantity = 0;
+
+    shoppingCarts.forEach((element) {
+      totalAmount += element.product!.price! * element.quantity!;
+      totalQuantity += element.quantity!.toInt();
+    });
+    setState(() {});
+  }
+
   Widget _bottomBar(context) {
-    addCost() async {
-      int sum = 0;
-      for (var i = 0; i < shoppingCarts.length; i++) {
-        sum += shoppingCarts[i].product!.price!;
-      }
-
-      return sum;
-    }
-
     double _width = MediaQuery.of(context).size.width;
     double _height = MediaQuery.of(context).size.height;
     var formatter = NumberFormat("#,###,000");
@@ -343,7 +373,7 @@ class _CartsState extends State<Carts> {
                   color: Color(0xff7A7C85)),
             ),
             Text(
-              shoppingCarts.length.toString(),
+              totalQuantity.toString(),
               style: GoogleFonts.poppins(
                   fontSize: _height * .019,
                   fontWeight: FontWeight.w500,
@@ -363,23 +393,30 @@ class _CartsState extends State<Carts> {
                   fontWeight: FontWeight.w400,
                   color: Color(0xff7A7C85)),
             ),
-            FutureBuilder(
-              future: addCost(),
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  var _total = snapshot.data!;
-                  return Text(
-                    "\N${formatter.format(_total)}.00",
-                    style: GoogleFonts.poppins(
-                        fontSize: _height * .031,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xff27AE60)),
-                  );
-                } else {
-                  return CircularProgressIndicator();
-                }
-              },
+            Text(
+              "\N${formatter.format(totalAmount)}",
+              style: GoogleFonts.poppins(
+                  fontSize: _height * .031,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xff27AE60)),
             ),
+            // FutureBuilder(
+            //   future: addCost(),
+            //   builder: (context, snapshot) {
+            //     if (snapshot.hasData) {
+            //       var _total = snapshot.data!;
+            //       return Text(
+            //         "\N${formatter.format(_total)}.00",
+            //         style: GoogleFonts.poppins(
+            //             fontSize: _height * .031,
+            //             fontWeight: FontWeight.w700,
+            //             color: Color(0xff27AE60)),
+            //       );
+            //     } else {
+            //       return CircularProgressIndicator();
+            //     }
+            //   },
+            // ),
           ]),
         ),
         SizedBox(
@@ -396,36 +433,54 @@ class _CartsState extends State<Carts> {
                   borderRadius: BorderRadius.circular(0),
                   color: appColorPrimary,
                 ),
-                child: FutureBuilder(
-                  future: addCost(),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      var _total = snapshot.data!;
-                      return InkWell(
-                        onTap: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => Checkout(
-                                      int.parse(_total.toString()),
-                                      shoppingCarts.length)));
-                        },
-                        child: Center(
-                          child: Text(
-                            "Checkout",
-                            style: GoogleFonts.poppins(
-                              color: appWhite,
-                              fontWeight: FontWeight.w600,
-                              fontSize: _height * .0174,
-                            ),
-                          ),
-                        ),
-                      );
-                    } else {
-                      return CircularProgressIndicator();
-                    }
+                child: InkWell(
+                  onTap: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => Checkout()));
                   },
+                  child: Center(
+                    child: Text(
+                      "Checkout",
+                      style: GoogleFonts.poppins(
+                        color: appWhite,
+                        fontWeight: FontWeight.w600,
+                        fontSize: _height * .0174,
+                      ),
+                    ),
+                  ),
                 ),
+                // child: FutureBuilder(
+                //   future: addCost(),
+                //   builder: (context, snapshot) {
+                //     if (snapshot.hasData) {
+                //       var _total = snapshot.data!;
+                //       return InkWell(
+                //         onTap: () {
+                //           Navigator.push(
+                //               context,
+                //               MaterialPageRoute(
+                //                   builder: (context) => Checkout(
+                //                       int.parse(_total.toString()),
+                //                       shoppingCarts.length)));
+                //         },
+                //         child: Center(
+                //           child: Text(
+                //             "Checkout",
+                //             style: GoogleFonts.poppins(
+                //               color: appWhite,
+                //               fontWeight: FontWeight.w600,
+                //               fontSize: _height * .0174,
+                //             ),
+                //           ),
+                //         ),
+                //       );
+                //     } else {
+                //       return CircularProgressIndicator();
+                //     }
+                //   },
+                // ),
               ),
             ),
           ]),
@@ -449,11 +504,17 @@ class _CartsState extends State<Carts> {
         if (this.mounted) {
           if (response.statusCode == 200) {
             var decodedData = jsonDecode(response.body);
-            List? newdata = decodedData["data"]["shoppingCart"]["shoppingCartItems"];
+            var newdata = decodedData["data"];
+            if(newdata == null){
+              isLoading = false;
+              nextScreenReplace(context, EmptyCart());
+            }
+            List? cartItems = decodedData["data"]["shoppingCart"]["shoppingCartItems"];
             setState(() {
-              shoppingCarts = newdata!.map((m) => CartItem.fromJson(m)).toList();
+              shoppingCarts = cartItems!.map((m) => CartItem.fromJson(m)).toList();
               isLoading = false;
             });
+            addCost();
           }
         }
       } on SocketException {

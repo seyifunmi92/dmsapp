@@ -129,8 +129,8 @@ class _MyOrdersState extends State<MyOrders> {
         Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) =>
-                    NewOrders(account.sapAccountId.toString())));
+                builder: (context) => NewOrders(account.sapAccountId.toString(),
+                    account.accountType!.code!)));
       },
       child: Padding(
         padding: EdgeInsets.only(bottom: _height * .01),
@@ -182,8 +182,10 @@ class _MyOrdersState extends State<MyOrders> {
         List myL = _gettX["data"]["items"];
         setState(() {
           _getX = myL.map<ItemY>((e) => ItemY.fromJson(e)).toList();
-          print(_getX![0].accountType!.name);
         });
+        _getX![0].accountType!.name!.contains("Clean Credit Customer")
+            ? print("CC customer")
+            : print(_getX![0].accountType!.name!);
       } else if (_list["statusCode"] == 401) {
         Provider.of<OrderBloc>(context, listen: false).isLoading = false;
         toast("Unauthorized Request");

@@ -1,4 +1,5 @@
 import 'package:dms/layout/appWidget.dart';
+import 'package:dms/screens/my%20orders/myorders.dart';
 import 'package:dms/screens/my_atc/atc_order_confirmation.dart';
 import 'package:dms/screens/my_atc/my_atc_select_business.dart';
 import 'package:dms/utils/colors.dart';
@@ -20,7 +21,7 @@ class _ATCsuccessState extends State<ATCsuccess> {
     double _width = MediaQuery.of(context).size.width;
     double _height = MediaQuery.of(context).size.height;
     return Scaffold(
-      appBar: dmsAppBar(context, '', showBack: true),
+      appBar: dmsAppBar(context, '', showBack: false),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -80,10 +81,8 @@ class _ATCsuccessState extends State<ATCsuccess> {
             SizedBox(height: _height * .2),
             InkWell(
               onTap: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => MyATCSelectBusiness()));
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => MyOrders()));
               },
               child: Container(
                 width: _width * .85,

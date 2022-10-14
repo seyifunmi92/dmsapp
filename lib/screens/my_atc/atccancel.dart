@@ -1,12 +1,13 @@
 import 'package:dms/layout/appWidget.dart';
+import 'package:dms/screens/my%20orders/myorders.dart';
 import 'package:dms/screens/my_atc/atc_order_confirmation.dart';
+import 'package:dms/screens/my_atc/myatcc.dart';
 import 'package:dms/utils/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class ATCsuccesscancel extends StatefulWidget {
   const ATCsuccesscancel({Key? key}) : super(key: key);
-
   @override
   _ATCsuccesscancelState createState() => _ATCsuccesscancelState();
 }
@@ -19,7 +20,7 @@ class _ATCsuccesscancelState extends State<ATCsuccesscancel> {
     var mypaddingr = SizedBox(width: _width * 0.07);
     var mypaddingrh2 = SizedBox(height: _height * .1174);
     return Scaffold(
-      appBar: dmsAppBar(context, '', showBack: true),
+      appBar: dmsAppBar(context, '', showBack: false),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -79,10 +80,8 @@ class _ATCsuccesscancelState extends State<ATCsuccesscancel> {
             SizedBox(height: _height * .2),
             InkWell(
               onTap: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => ATCOrderComfirmation()));
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => MyOrders()));
               },
               child: Container(
                 width: _width * .85,

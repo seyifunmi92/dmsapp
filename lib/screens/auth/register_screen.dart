@@ -39,7 +39,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   void initState() {
     final CountryBloc cb = context.read<CountryBloc>();
-    selectedCountryCode = cb.CountryId;
+    selectedCountryCode = cb.CountryId!;
     final CompanyBloc cob = context.read<CompanyBloc>();
     selectedCompanyCode = cob.CompanyId;
     // TODO: implement initState
@@ -101,11 +101,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     children: <Widget>[
                       GestureDetector(
                         onTap: () {
-                          // nextScreenPopup(context, CountryPicker());
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => CountryPicker()));
+                          nextScreenPopup(context, CountryPicker());
+                          // Navigator.push(
+                          //     context,
+                          //     MaterialPageRoute(
+                          //         builder: (context) => CountryPicker()));
                         },
                         child: Container(
                           decoration: BoxDecoration(
@@ -135,7 +135,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   textAlign: TextAlign.start,
                                 ),
                                 Icon(
-                                  Icons.arrow_drop_down,
+                                  Icons.keyboard_arrow_down,
                                   color: iconColorSecondary,
                                   size: _screenHeight * .027,
                                 ),
@@ -181,7 +181,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 textAlign: TextAlign.start,
                               ),
                               Icon(
-                                Icons.arrow_drop_down,
+                                Icons.keyboard_arrow_down,
                                 color: iconColorSecondary,
                                 size: _screenHeight * .027,
                               ),
@@ -347,7 +347,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     hideKeyboard(context);
     if (formKey.currentState!.validate()) {
       final CountryBloc cb = context.read<CountryBloc>();
-      selectedCountryCode = cb.CountryId;
+      selectedCountryCode = cb.CountryId!;
       final CompanyBloc cob = context.read<CompanyBloc>();
       selectedCompanyCode = cob.CompanyId;
       if(selectedCompanyCode == "" || selectedCountryCode == ""){
@@ -357,7 +357,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       setState(() {});
 
       final LogInBloc lb = Provider.of<LogInBloc>(context, listen: false);
-      Map req = {"distributorNumber": sapIDCont.text, "countryCode": selectedCountryCode, "channelCode": "Mobile", "deviceId": "7864345", "companyCode": selectedCompanyCode};
+      Map req = {"distributorNumber": sapIDCont.text, "countryCode": selectedCountryCode, "channelCode": "Mobile", "deviceId": lb.deviceID, "companyCode": selectedCompanyCode};
 
       await postRequest('/register', req).then((value) {
         print(value);

@@ -167,8 +167,8 @@ class _MyATCSelectBusinessState extends State<MyATCSelectBusiness> {
             mypadr,
             InkWell(
               onTap: () {
-                Navigator.push(
-                    context, MaterialPageRoute(builder: (context) => MyATCC()));
+                // Navigator.push(
+                //     context, MaterialPageRoute(builder: (context) => MyATCC()));
               },
               child: Container(
                 decoration: BoxDecoration(
@@ -208,8 +208,8 @@ class _MyATCSelectBusinessState extends State<MyATCSelectBusiness> {
             mypadr,
             InkWell(
               onTap: () {
-                Navigator.push(
-                    context, MaterialPageRoute(builder: (context) => MyATCC()));
+                // Navigator.push(
+                //     context, MaterialPageRoute(builder: (context) => MyATCC()));
               },
               child: Container(
                 decoration: BoxDecoration(

@@ -514,7 +514,9 @@ class DmsOrder9 {
         shoppingCartId: json["shoppingCartId"],
         estimatedNetValue: json["estimatedNetValue"],
         orderSapNetValue: json["orderSapNetValue"],
-        deliveryDate: DateTime.parse(json["deliveryDate"]),
+        deliveryDate: json["deliveryDate"] == null
+            ? null
+            : DateTime.parse(json["deliveryDate"]),
         deliveryAddress: json["deliveryAddress"],
         truckSizeCode: json["truckSizeCode"],
         deliveryCity: json["deliveryCity"],
@@ -812,7 +814,7 @@ class SapOrder {
   SapOrder({
     this.id,
     this.dateCreated,
-    this.distributorNumber,
+    this.orderSapNumber,
     this.parentId,
     this.orderType,
     this.deliveryStatus,
@@ -821,7 +823,9 @@ class SapOrder {
     this.estimatedNetValue,
     this.orderSapNetValue,
     this.deliveryDate,
+    this.deliveryAddress,
     this.deliveryCity,
+    this.plantCode,
     this.truckSize,
     this.sapFreightCharges,
     this.reference,
@@ -831,7 +835,7 @@ class SapOrder {
 
   int? id;
   DateTime? dateCreated;
-  String? distributorNumber;
+  String? orderSapNumber;
   String? parentId;
   DeliveryStatus? orderType;
   DeliveryStatus? deliveryStatus;
@@ -840,7 +844,9 @@ class SapOrder {
   int? estimatedNetValue;
   int? orderSapNetValue;
   DateTime? deliveryDate;
+  String? deliveryAddress;
   String? deliveryCity;
+  String? plantCode;
   DeliveryBlock? truckSize;
   int? sapFreightCharges;
   String? reference;
@@ -850,16 +856,24 @@ class SapOrder {
   factory SapOrder.fromJson(Map<String, dynamic> json) => SapOrder(
         id: json["id"],
         dateCreated: DateTime.parse(json["dateCreated"]),
-        distributorNumber: json["distributorNumber"],
+        orderSapNumber: json["orderSapNumber"],
         parentId: json["parentId"],
         orderType: DeliveryStatus.fromJson(json["orderType"]),
-        deliveryStatus: DeliveryStatus.fromJson(json["deliveryStatus"]),
-        orderStatus: DeliveryStatus.fromJson(json["orderStatus"]),
-        deliveryBlock: DeliveryBlock.fromJson(json["deliveryBlock"]),
+        deliveryStatus: (json["deliveryStatus"]) == null
+            ? null
+            : DeliveryStatus.fromJson(json["deliveryStatus"]),
+        orderStatus: (json["orderStatus"]) == null
+            ? null
+            : DeliveryStatus.fromJson(json["orderStatus"]),
+        deliveryBlock: (json["deliveryBlock"]) == null
+            ? null
+            : DeliveryBlock.fromJson(json["deliveryBlock"]),
         estimatedNetValue: json["estimatedNetValue"],
         orderSapNetValue: json["orderSapNetValue"],
         deliveryDate: DateTime.parse(json["deliveryDate"]),
+        deliveryAddress: json["deliveryAddress"],
         deliveryCity: json["deliveryCity"],
+        plantCode: (json["plantCode"]) == null ? null : json["plantCode"],
         truckSize: DeliveryBlock.fromJson(json["truckSize"]),
         sapFreightCharges: json["sapFreightCharges"],
         reference: json["reference"],
@@ -871,7 +885,7 @@ class SapOrder {
   Map<String, dynamic> toJson() => {
         "id": id,
         "dateCreated": dateCreated!.toIso8601String(),
-        "distributorNumber": distributorNumber,
+        "orderSapNumber": orderSapNumber,
         "parentId": parentId,
         "orderType": orderType!.toJson(),
         "deliveryStatus": deliveryStatus!.toJson(),
@@ -880,7 +894,9 @@ class SapOrder {
         "estimatedNetValue": estimatedNetValue,
         "orderSapNetValue": orderSapNetValue,
         "deliveryDate": deliveryDate!.toIso8601String(),
+        "deliveryAddress": deliveryAddress,
         "deliveryCity": deliveryCity,
+        "plantCode": plantCode,
         "truckSize": truckSize!.toJson(),
         "sapFreightCharges": sapFreightCharges,
         "reference": reference,
@@ -956,7 +972,7 @@ class OrderItem2 {
   int? orderId;
   int? userId;
   String? orderItemSapNumber;
-  int? quantity;
+  double? quantity;
   String? salesUnitOfMeasureCode;
   int? productId;
   int? sapPricePerUnit;
@@ -966,7 +982,9 @@ class OrderItem2 {
   factory OrderItem2.fromJson(Map<String, dynamic> json) => OrderItem2(
         id: json["id"],
         dateCreated: DateTime.parse(json["dateCreated"]),
-        dateModified: DateTime.parse(json["dateModified"]),
+        dateModified: (json["dateModified"]) == null
+            ? null
+            : DateTime.parse(json["dateModified"]),
         orderId: json["orderId"],
         userId: json["userId"],
         orderItemSapNumber: json["orderItemSapNumber"],
@@ -1460,6 +1478,34 @@ class DmsOrderY {
       };
 }
 
+class CancelOrder {
+  CancelOrder({
+    this.data,
+    this.status,
+    this.statusCode,
+    this.message,
+  });
+
+  String? data;
+  String? status;
+  String? statusCode;
+  String? message;
+
+  factory CancelOrder.fromJson(Map<String, dynamic> json) => CancelOrder(
+        data: json["data"],
+        status: json["status"],
+        statusCode: json["statusCode"],
+        message: json["message"],
+      );
+
+  Map<String, dynamic> toJson() => {
+        "data": data,
+        "status": status,
+        "statusCode": statusCode,
+        "message": message,
+      };
+}
+
 class RecentDmsOrders {
   RecentDmsOrders({
     this.datarecent,
@@ -1475,7 +1521,9 @@ class RecentDmsOrders {
 
   factory RecentDmsOrders.fromJson(Map<String, dynamic> json) =>
       RecentDmsOrders(
-        datarecent: DataRecent.fromJson(json["datarecent"]),
+        datarecent: (json["datarecent"]) == null
+            ? null
+            : DataRecent.fromJson(json["datarecent"]),
         statusCode: json["statusCode"],
         status: json["status"],
         message: json["message"],
@@ -1728,7 +1776,7 @@ class OrderItemR {
   int? orderId;
   int? userId;
   String? orderItemSapNumber;
-  int? quantity;
+  double? quantity;
   String? salesUnitOfMeasureCode;
   int? productId;
   int? sapPricePerUnit;
@@ -1738,7 +1786,9 @@ class OrderItemR {
   factory OrderItemR.fromJson(Map<String, dynamic> json) => OrderItemR(
         id: json["id"],
         dateCreated: DateTime.parse(json["dateCreated"]),
-        dateModified: DateTime.parse(json["dateModified"]),
+        dateModified: (json["dateModified"]) == null
+            ? null
+            : DateTime.parse(json["dateModified"]),
         orderId: json["orderId"],
         userId: json["userId"],
         orderItemSapNumber: json["orderItemSapNumber"],
@@ -2010,11 +2060,225 @@ class PaginationY {
         totalPages: json["totalPages"],
         totalRecords: json["totalRecords"],
       );
-
   Map<String, dynamic> toJson() => {
         "pageIndex": pageIndex,
         "pageSize": pageSize,
         "totalPages": totalPages,
         "totalRecords": totalRecords,
+      };
+}
+
+class AtcOrder {
+  AtcOrder({
+    this.data,
+    this.status,
+    this.statusCode,
+    this.message,
+  });
+
+  DataATC? data;
+  String? status;
+  String? statusCode;
+  String? message;
+
+  factory AtcOrder.fromJson(Map<String, dynamic> json) => AtcOrder(
+        data: DataATC.fromJson(json["data"]),
+        status: json["status"],
+        statusCode: json["statusCode"],
+        message: json["message"],
+      );
+
+  Map<String, dynamic> toJson() => {
+        "data": data!.toJson(),
+        "status": status,
+        "statusCode": statusCode,
+        "message": message,
+      };
+}
+
+class DataATC {
+  DataATC({
+    this.items,
+    this.pagination,
+  });
+
+  List<Item>? items;
+  Pagination? pagination;
+
+  factory DataATC.fromJson(Map<String, dynamic> json) => DataATC(
+        items: List<Item>.from(json["items"].map((x) => Item.fromJson(x))),
+        pagination: Pagination.fromJson(json["pagination"]),
+      );
+
+  Map<String, dynamic> toJson() => {
+        "items": List<dynamic>.from(items!.map((x) => x.toJson())),
+        "pagination": pagination!.toJson(),
+      };
+}
+
+class ItemATC {
+  ItemATC({
+    this.dmsorderId,
+    this.dateCreated,
+    this.parentId,
+    this.distributorNumber,
+    this.orderStatus,
+    this.orderType,
+    this.isAtc,
+    this.estimatedNetvalue,
+  });
+
+  int? dmsorderId;
+  DateTime? dateCreated;
+  dynamic? parentId;
+  String? distributorNumber;
+  Order? orderStatus;
+  Order? orderType;
+  bool? isAtc;
+  double? estimatedNetvalue;
+
+  factory ItemATC.fromJson(Map<String, dynamic> json) => ItemATC(
+        dmsorderId: json["dmsorderId"],
+        dateCreated: DateTime.parse(json["dateCreated"]),
+        parentId: json["parentId"],
+        distributorNumber: json["distributorNumber"],
+        orderStatus: Order.fromJson(json["orderStatus"]),
+        orderType: Order.fromJson(json["orderType"]),
+        isAtc: json["isATC"],
+        estimatedNetvalue: json["estimatedNetvalue"],
+      );
+
+  Map<String, dynamic> toJson() => {
+        "dmsorderId": dmsorderId,
+        "dateCreated": dateCreated!.toIso8601String(),
+        "parentId": parentId,
+        "distributorNumber": distributorNumber,
+        "orderStatus": orderStatus!.toJson(),
+        "orderType": orderType!.toJson(),
+        "isATC": isAtc,
+        "estimatedNetvalue": estimatedNetvalue,
+      };
+}
+
+class OrderATC {
+  OrderATC({
+    this.id,
+    this.code,
+    this.name,
+  });
+
+  int? id;
+  String? code;
+  String? name;
+
+  factory OrderATC.fromJson(Map<String, dynamic> json) => OrderATC(
+        id: json["id"],
+        code: json["code"],
+        name: json["name"],
+      );
+  Map<String, dynamic> toJson() => {
+        "id": id,
+        "code": code,
+        "name": name,
+      };
+}
+
+class PaginationATC {
+  PaginationATC({
+    this.pageNumber,
+    this.pageSize,
+    this.totalPages,
+    this.totalRecords,
+  });
+
+  int? pageNumber;
+  int? pageSize;
+  int? totalPages;
+  int? totalRecords;
+
+  factory PaginationATC.fromJson(Map<String, dynamic> json) => PaginationATC(
+        pageNumber: json["pageNumber"],
+        pageSize: json["pageSize"],
+        totalPages: json["totalPages"],
+        totalRecords: json["totalRecords"],
+      );
+
+  Map<String, dynamic> toJson() => {
+        "pageNumber": pageNumber,
+        "pageSize": pageSize,
+        "totalPages": totalPages,
+        "totalRecords": totalRecords,
+      };
+}
+
+class Otp1 {
+  Otp1({
+    this.otpId,
+    this.otpCode,
+  });
+
+  int? otpId;
+  String? otpCode;
+
+  factory Otp1.fromJson(Map<String, dynamic> json) => Otp1(
+        otpId: json["otpId"],
+        otpCode: json["otpCode"],
+      );
+
+  Map<String, dynamic> toJson() => {
+        "otpId": otpId,
+        "otpCode": otpCode,
+      };
+}
+
+class Otp2 {
+  Otp2({
+    this.otpId,
+    this.otpCode,
+  });
+
+  int? otpId;
+  String? otpCode;
+
+  factory Otp2.fromJson(Map<String, dynamic> json) => Otp2(
+        otpId: json["otpId"],
+        otpCode: json["otpCode"],
+      );
+
+  Map<String, dynamic> toJson() => {
+        "otpId": otpId,
+        "otpCode": otpCode,
+      };
+}
+
+class TotalyPrice {
+  TotalyPrice({
+    this.totalPrice,
+  });
+
+  double? totalPrice;
+
+  factory TotalyPrice.fromJson(Map<double, dynamic> json) => TotalyPrice(
+        totalPrice: json["totalPrice"],
+      );
+
+  Map<double, dynamic> toJson() => {
+        totalPrice!: totalPrice,
+      };
+}
+
+class TotalyQuantity {
+  TotalyQuantity({
+    this.totalQuantity,
+  });
+
+  double? totalQuantity;
+
+  factory TotalyQuantity.fromJson(Map<double, dynamic> json) => TotalyQuantity(
+        totalQuantity: json["totalPrice"],
+      );
+
+  Map<double, dynamic> toJson() => {
+        totalQuantity!: totalQuantity,
       };
 }

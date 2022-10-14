@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:nb_utils/nb_utils.dart';
 
 void nextScreen (context, page){
-  finish(context);
+  // finish(context);
   Navigator.push(context, MaterialPageRoute(
     builder: (context) => page));
 }
@@ -27,7 +27,7 @@ void nextScreenReplace (context, page){
 
 
 void nextScreenPopup (context, page){
-  finish(context);
+  // finish(context);
   Navigator.push(context, MaterialPageRoute(
     fullscreenDialog: true,
     builder: (context) => page),

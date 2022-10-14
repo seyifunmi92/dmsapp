@@ -12,6 +12,7 @@ import 'package:dms/screens/auth/password_reset/password_reset_request.dart';
 import 'package:dms/screens/auth/register_screen_contd.dart';
 import 'package:dms/screens/dashboard/dashboard.dart';
 import 'package:dms/screens/faq/faq_categories.dart';
+import 'package:dms/screens/my%20orders/newmyordrs.dart';
 import 'package:dms/screens/my%20orders/orderdetails.dart';
 import 'package:dms/screens/my_atc/my_atc_detail.dart';
 import 'package:dms/splashscreen/splashscreen.dart';
@@ -24,14 +25,15 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:nb_utils/nb_utils.dart';
 import 'package:provider/provider.dart';
-
 import '../../layout/loading_indicator_widget.dart';
 import '../../services/orderservices.dart';
+import 'myorders.dart';
 
 class MyOrders2 extends StatefulWidget {
   String status;
   String sapNumber;
-  MyOrders2(this.status, this.sapNumber);
+  String accountType;
+  MyOrders2(this.status, this.sapNumber, this.accountType);
   @override
   _MyOrders2State createState() => _MyOrders2State();
 }
@@ -47,19 +49,35 @@ class _MyOrders2State extends State<MyOrders2> {
   void initState() {
     Provider.of<OrderBloc>(context, listen: false).isLoading = true;
     getDMS();
-    //getOrders();
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
+    widget.accountType == "CC"
+        ? Provider.of<OrderBloc>(context, listen: false).isBG = false
+        : Provider.of<OrderBloc>(context, listen: false).isBG = true;
     return Provider.of<OrderBloc>(context, listen: false).isLoading
         ? Scaffold(
             body: Center(child: LoadingIndicatorWidget()),
           )
         : Scaffold(
             backgroundColor: appWhite,
-            appBar: dmsAppBar(context, ""),
+            appBar: AppBar(
+              automaticallyImplyLeading: false,
+              backgroundColor: Colors.white,
+              shadowColor: Colors.transparent,
+              leading: IconButton(
+                onPressed: () {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => MyOrders()));
+                },
+                icon: Icon(
+                  Icons.arrow_back_ios,
+                  color: appColorPrimary,
+                ),
+              ),
+            ),
             body: _body(context),
           );
   }
@@ -69,7 +87,6 @@ class _MyOrders2State extends State<MyOrders2> {
     double _height = MediaQuery.of(context).size.height;
     var mypadr = SizedBox(width: _width * .04);
     var mypadh = SizedBox(height: _height * .008);
-
     return SingleChildScrollView(
       scrollDirection: Axis.vertical,
       child: Column(
@@ -130,11 +147,9 @@ class _MyOrders2State extends State<MyOrders2> {
                           child: Text(
                             "Search with Order Number",
                             style: GoogleFonts.poppins(
-                              color: Color(0xffB7BBC5),
-                              fontWeight: FontWeight.w400,
-                              //fontFamily: fontRegular,
-                              fontSize: _height * .014,
-                            ),
+                                color: Color(0xffB7BBC5),
+                                fontWeight: FontWeight.w400,
+                                fontSize: _height * .014),
                             textAlign: TextAlign.start,
                           ),
                         ),
@@ -154,7 +169,6 @@ class _MyOrders2State extends State<MyOrders2> {
                     color: appColorPrimary,
                     height: _height * .0569,
                     width: _width * .1205,
-                    //child: Icon(Icons.filter),
                     child: Image.asset(
                       "lib/assets/new.png",
                       height: _height * 0.019,
@@ -180,7 +194,7 @@ class _MyOrders2State extends State<MyOrders2> {
                     ),
                   ],
                 )
-              : Row(
+              : Column(
                   children: [
                     mypadr,
                     ..._dmsData!.map((e) => _boxCustom1(e)),
@@ -190,103 +204,6 @@ class _MyOrders2State extends State<MyOrders2> {
       ),
     );
   }
-
-  // Widget _boxCustom1(BuildContext context) {
-  //   double _width = MediaQuery.of(context).size.width;
-  //   double _height = MediaQuery.of(context).size.height;
-  //   //var mypaddingr2 = SizedBox(width: _width * 0.05);
-  //   var mypadhh = SizedBox(height: _height * .02);
-  //   return InkWell(
-  //     onTap: () {
-  //       Navigator.push(
-  //           context, MaterialPageRoute(builder: (context) => OrderDetails()));
-  //     },
-  //     child: Container(
-  //       width: _width * .92,
-  //       height: _height * .104,
-  //       decoration: BoxDecoration(
-  //         boxShadow: [
-  //           BoxShadow(
-  //             color: Colors.black12,
-  //             blurStyle: BlurStyle.outer,
-  //             blurRadius: 10,
-  //             spreadRadius: 0,
-  //             offset: Offset.zero,
-  //           ),
-  //         ],
-  //         color: appWhite,
-  //         borderRadius: BorderRadius.circular(5),
-  //       ),
-  //       child: SingleChildScrollView(
-  //         child: Column(children: [
-  //           SizedBox(
-  //             height: _height * .013,
-  //           ),
-  //           Padding(
-  //             padding: EdgeInsets.symmetric(horizontal: _width * .05),
-  //             child: Row(
-  //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //               children: [
-  //                 Column(
-  //                   children: [
-  //                     Text(
-  //                       "Order 12323342",
-  //                       style: GoogleFonts.openSans(
-  //                           fontSize: _height * .02,
-  //                           fontWeight: FontWeight.w700,
-  //                           color: Color(0xff343434)),
-  //                     ),
-  //                   ],
-  //                 ),
-  //                 //SizedBox(width: _width * .45),
-  //                 Text(
-  //                   "12-05-22",
-  //                   style: GoogleFonts.openSans(
-  //                     fontSize: _height * .02,
-  //                     fontWeight: FontWeight.w600,
-  //                   ),
-  //                 ),
-  //               ],
-  //             ),
-  //           ),
-  //           mypadhh,
-  //           Padding(
-  //             padding: EdgeInsets.symmetric(horizontal: _width * .05),
-  //             child: Row(
-  //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //               children: [
-  //                 //mypaddingr2,
-  //                 // Text(
-  //                 //   "N20,000",
-  //                 //   style: GoogleFonts.openSans(
-  //                 //       fontSize: _height * .014,
-  //                 //       fontWeight: FontWeight.w400,
-  //                 //       color: Color(0xff00CC08)),
-  //                 // ),
-  //                 //SizedBox(width: _width * .54),
-  //                 Container(
-  //                   height: _height * .0236,
-  //                   width: _width * .0923,
-  //                   decoration: BoxDecoration(
-  //                       color: Color(0xffE4EBF3),
-  //                       borderRadius: BorderRadius.circular(5)),
-  //                   child: Center(
-  //                       child: Text(
-  //                     "Open",
-  //                     style: GoogleFonts.openSans(
-  //                         fontSize: _height * .0118,
-  //                         fontWeight: FontWeight.w400,
-  //                         color: Color(0xff8D93A1)),
-  //                   )),
-  //                 ),
-  //               ],
-  //             ),
-  //           ),
-  //         ]),
-  //       ),
-  //     ),
-  //   );
-  // }
 
   Widget _boxCustom1(DmsOrder _orderDms) {
     final _format = NumberFormat("#,###,000.00");
@@ -298,7 +215,8 @@ class _MyOrders2State extends State<MyOrders2> {
         Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) => OrderDetails(_orderDms.dmsorderId!)));
+                builder: (context) =>
+                    OrderDetails(_orderDms.dmsorderId!, widget.accountType)));
       },
       child: Padding(
         padding: EdgeInsets.only(bottom: _height * .01),
@@ -361,26 +279,26 @@ class _MyOrders2State extends State<MyOrders2> {
                   children: [
                     Container(
                       height: _height * .0284,
-                      width: _width * .305,
+                      width: _width * .20,
                       decoration: BoxDecoration(
-                          color: Color(0xffE4EBF3).withOpacity(0.5),
+                          color: Color(0xffE4EBF3),
                           borderRadius: BorderRadius.circular(5)),
                       child: Center(
                           child: Text(
-                        _orderDms.orderStatus!.code!,
+                        _orderDms.orderType!.name!,
                         style: GoogleFonts.openSans(
-                            fontSize: _height * .0118,
+                            fontSize: _height * .01,
                             fontWeight: FontWeight.w400,
                             color: Color(0xff8D93A1)),
                       )),
                     ),
-                    InkWell(
-                      onTap: () {},
-                      child: Image.asset(
-                        "lib/assets/dell.png",
-                        height: _height * .016,
-                      ),
-                    ),
+                    // InkWell(
+                    //   onTap: () {},
+                    //   child: Image.asset(
+                    //     "lib/assets/dell.png",
+                    //     height: _height * .016,
+                    //   ),
+                    // ),
                   ],
                 ),
               ),
@@ -407,7 +325,6 @@ class _MyOrders2State extends State<MyOrders2> {
           ),
         ),
         height: containerheight,
-        //color: Colors.black,
         child: SingleChildScrollView(
           scrollDirection: Axis.vertical,
           child: Padding(
@@ -442,7 +359,6 @@ class _MyOrders2State extends State<MyOrders2> {
                             style: BorderStyle.solid)),
                     height: _height * .0533,
                     width: _width,
-                    // padding: EdgeInsets.symmetric(horizontal: _width *.04),
                     child: Center(
                       child: Padding(
                         padding: EdgeInsets.symmetric(horizontal: _width * .04),
@@ -485,7 +401,6 @@ class _MyOrders2State extends State<MyOrders2> {
                             style: BorderStyle.solid)),
                     height: _height * .0533,
                     width: _width,
-                    // padding: EdgeInsets.symmetric(horizontal: _width *.04),
                     child: Center(
                       child: Padding(
                         padding: EdgeInsets.symmetric(horizontal: _width * .04),
@@ -570,6 +485,7 @@ class _MyOrders2State extends State<MyOrders2> {
                 myList.map<DmsOrder>((e) => DmsOrder.fromJson(e)).toList();
           });
         } else {
+          Provider.of<OrderBloc>(context, listen: false).isLoading = false;
           toast(bodyT["message"]);
         }
       }

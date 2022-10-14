@@ -1,8 +1,8 @@
 import 'dart:convert';
-
 import 'package:dms/constant.dart';
 import 'package:dms/layout/appWidget.dart';
 import 'package:dms/layout/loading_indicator_widget.dart';
+import 'package:dms/model/cart_item_model.dart';
 import 'package:dms/model/ordermodels.dart';
 import 'package:dms/screens/accounts/accountdelete.dart';
 import 'package:dms/screens/auth/confirm_otp.dart';
@@ -11,11 +11,13 @@ import 'package:dms/screens/auth/new_distributor_notice.dart';
 import 'package:dms/screens/auth/password_reset/input_new_password.dart';
 import 'package:dms/screens/auth/password_reset/password_reset_request.dart';
 import 'package:dms/screens/auth/register_screen_contd.dart';
+import 'package:dms/screens/carts/cartscheduledelivery.dart';
 import 'package:dms/screens/dashboard/dashboard.dart';
 import 'package:dms/screens/faq/faq_categories.dart';
 import 'package:dms/screens/my%20orders/orderhistory.dart';
 import 'package:dms/screens/my%20orders/orderitems.dart';
 import 'package:dms/screens/my_atc/my_atc_detail.dart';
+import 'package:dms/screens/my_atc/myatcbg.dart';
 import 'package:dms/screens/my_atc/myatcc.dart';
 import 'package:dms/services/orderservices.dart';
 import 'package:dms/splashscreen/splashscreen.dart';
@@ -32,17 +34,24 @@ import 'package:provider/provider.dart';
 
 class OrderDetails extends StatefulWidget {
   int orderId;
-  OrderDetails(this.orderId);
+  String accountType;
+  OrderDetails(this.orderId, this.accountType);
 
   @override
   _OrderDetailsState createState() => _OrderDetailsState();
 }
 
 class _OrderDetailsState extends State<OrderDetails> {
+  int totalA = 0;
+  double totB = 0;
+  bool noAtc = false;
   final _format = NumberFormat("#,###,000.00");
   List<OrderItem9>? _itemDms;
+  List<CartItem>? itemD;
   DmsOrder9? _itemOrder;
   GetSapOrderDetails? _getsapdetails;
+  TotalyPrice? _total;
+  TotalyQuantity? qtotal;
   @override
   void initState() {
     _orderDetails(widget.orderId);
@@ -52,6 +61,10 @@ class _OrderDetailsState extends State<OrderDetails> {
 
   @override
   Widget build(BuildContext context) {
+    widget.accountType == "CC"
+        ? Provider.of<OrderBloc>(context, listen: false).isBG = false
+        : Provider.of<OrderBloc>(context, listen: false).isBG = true;
+
     double _height = MediaQuery.of(context).size.height;
     return Provider.of<OrderBloc>(context, listen: false).isLoading
         ? Scaffold(
@@ -202,7 +215,7 @@ class _OrderDetailsState extends State<OrderDetails> {
                             ),
                           ),
                           Text(
-                            _itemOrder!.orderItems![0].quantity.toString(),
+                            qtotal!.totalQuantity.toString(),
                             style: GoogleFonts.poppins(
                               fontWeight: FontWeight.w300,
                               color: Color(0xff333542),
@@ -256,18 +269,21 @@ class _OrderDetailsState extends State<OrderDetails> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            _itemOrder!.deliveryDate!.day.toString() +
-                                "-" +
-                                _itemOrder!.deliveryDate!.month.toString() +
-                                "-" +
-                                _itemOrder!.deliveryDate!.year.toString(),
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w300,
-                              color: Color(0xff333542),
-                              fontSize: _height * .016,
-                            ),
-                          ),
+                          _itemOrder!.deliveryDate != null
+                              ? Text(
+                                  _itemOrder!.deliveryDate!.day.toString() +
+                                      "-" +
+                                      _itemOrder!.deliveryDate!.month
+                                          .toString() +
+                                      "-" +
+                                      _itemOrder!.deliveryDate!.year.toString(),
+                                  style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.w300,
+                                    color: Color(0xff333542),
+                                    fontSize: _height * .016,
+                                  ),
+                                )
+                              : Text(""),
                           Text(
                             "Sales",
                             style: GoogleFonts.poppins(
@@ -279,7 +295,6 @@ class _OrderDetailsState extends State<OrderDetails> {
                         ],
                       ),
                     ),
-
                     SizedBox(
                       height: _height * .025,
                     ),
@@ -372,9 +387,7 @@ class _OrderDetailsState extends State<OrderDetails> {
                               fontSize: _height * .02,
                             ),
                           ),
-                          // SizedBox(
-                          //   width: _width * .67,
-                          // ),
+
                           Text(
                             "",
                             style: GoogleFonts.poppins(
@@ -392,14 +405,16 @@ class _OrderDetailsState extends State<OrderDetails> {
                     Row(
                       children: [
                         mypadr,
-                        Text(
-                          _itemOrder!.deliveryAddress.toString(),
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w400,
-                            color: Color(0xff7A7C85),
-                            fontSize: _height * .02,
-                          ),
-                        ),
+                        _itemOrder!.deliveryAddress != null
+                            ? Text(
+                                _itemOrder!.deliveryAddress!,
+                                style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w400,
+                                  color: Color(0xff7A7C85),
+                                  fontSize: _height * .02,
+                                ),
+                              )
+                            : Text(""),
                       ],
                     ),
                     SizedBox(
@@ -427,9 +442,7 @@ class _OrderDetailsState extends State<OrderDetails> {
                         dashColor: Color(0xffcbcbcb).withOpacity(0.6),
                       ),
                     ),
-                    // SizedBox(
-                    //   height: _height * .019,
-                    // ),
+
                     SizedBox(
                       height: _height * .015,
                     ),
@@ -438,7 +451,6 @@ class _OrderDetailsState extends State<OrderDetails> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          //mypadr,
                           Text(
                             "Total Price",
                             style: GoogleFonts.poppins(
@@ -447,11 +459,10 @@ class _OrderDetailsState extends State<OrderDetails> {
                               fontSize: _height * .02,
                             ),
                           ),
-
                           Text(
                             _itemOrder!.estimatedNetValue != 0.00
-                                ? "\₦${_format.format(_itemOrder!.estimatedNetValue)}"
-                                : "\₦0.00",
+                                ? "\N${_format.format(_total!.totalPrice)}"
+                                : "\N0.00",
                             style: GoogleFonts.poppins(
                               fontWeight: FontWeight.w700,
                               color: Color(0xff27AE60),
@@ -467,34 +478,80 @@ class _OrderDetailsState extends State<OrderDetails> {
             ],
           ),
           SizedBox(height: _height * .01),
-          Row(
-            children: [
-              mypadr,
-              InkWell(
-                onTap: () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => MyATCC()));
-                },
-                child: Container(
-                  width: _width * .92,
-                  height: _height * .0633,
-                  decoration: BoxDecoration(
-                    //border: Border.all(color: Color(0xffB1BBC6)),
-                    color: appColorPrimary,
-                  ),
-                  child: Center(
-                      child: Text(
-                    "View ATCs",
-                    style: GoogleFonts.poppins(
-                      color: white,
-                      fontSize: _height * .016,
-                      fontWeight: FontWeight.w500,
+          noAtc == true
+              ? Row(
+                  children: [
+                    mypadr,
+                    InkWell(
+                      onTap: () {
+                        // Navigator.push(
+                        //     context,
+                        //     MaterialPageRoute(
+                        //         builder: (context) => Schedule(
+                        //             _itemOrder!.estimatedNetValue!.toInt(),
+                        //             _itemOrder!.orderItems!.length,
+                        //             _itemOrder!.id,
+                        //             itemD != null ? itemD! : List.empty(),
+                        //             _itemDms!,
+                        //             "New/Saved")));
+                      },
+                      child: Container(
+                        width: _width * .92,
+                        height: _height * .0633,
+                        decoration: BoxDecoration(
+                          color: appColorPrimary,
+                        ),
+                        child: Center(
+                            child: Text(
+                          "Proceed To Schedule",
+                          style: GoogleFonts.poppins(
+                            color: white,
+                            fontSize: _height * .016,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        )),
+                      ),
                     ),
-                  )),
+                  ],
+                )
+              : Row(
+                  children: [
+                    mypadr,
+                    InkWell(
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => Provider.of<OrderBloc>(
+                                            context,
+                                            listen: false)
+                                        .isBG
+                                    ? MyAtcBg()
+                                    : MyATCC(
+                                        _itemOrder!.distributorSapAccount!
+                                            .distributorSapAccountId!,
+                                        _itemOrder!.orderSapNumber)));
+                      },
+                      child: Container(
+                        width: _width * .92,
+                        height: _height * .0633,
+                        decoration: BoxDecoration(
+                          //border: Border.all(color: Color(0xffB1BBC6)),
+                          color: appColorPrimary,
+                        ),
+                        child: Center(
+                            child: Text(
+                          "View ATCs",
+                          style: GoogleFonts.poppins(
+                            color: white,
+                            fontSize: _height * .016,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        )),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
           SizedBox(
             height: _height * .01,
           ),
@@ -572,6 +629,54 @@ class _OrderDetailsState extends State<OrderDetails> {
     );
   }
 
+  priceTotal() async {
+    double totalPrice = 0;
+    _itemDms != null
+        ? _itemDms!.forEach((element) {
+            totalPrice += element.product!.price! * element.quantity!.toInt();
+            print(totalPrice);
+          })
+        : null;
+    return totalPrice;
+  }
+
+  qtyTotal() async {
+    double totalQuantity = 0;
+    _itemDms != null
+        ? _itemDms!.forEach((element) {
+            totalQuantity += element.quantity!.toDouble();
+            print(totalQuantity);
+          })
+        : null;
+    return totalQuantity;
+  }
+
+  myOut(double totalQ) {
+    if (totalQ != bool) {
+      var myQuantity = jsonDecode(totalQ.toString());
+      if (myQuantity.toString().contains(".")) {
+        setState(() {
+          qtotal = TotalyQuantity(totalQuantity: totalQ);
+        });
+      } else {
+        print("Error Occured");
+      }
+    }
+  }
+
+  pOutput(double totalP) {
+    if (totalP != bool) {
+      var myPrice = jsonDecode(totalP.toString());
+      if (myPrice.toString().contains(".")) {
+        setState(() {
+          _total = TotalyPrice(totalPrice: totalP);
+        });
+      } else {
+        print("Exception Occured");
+      }
+    }
+  }
+
   void _orderDetails(int orderId) {
     Provider.of<OrderBloc>(context, listen: false)
         .getDMSOrderdetails(widget.orderId)
@@ -591,9 +696,14 @@ class _OrderDetailsState extends State<OrderDetails> {
           _itemDms =
               _listyy.map<OrderItem9>((e) => OrderItem9.fromJson(e)).toList();
           _itemOrder = DmsOrder9.fromJson(mData);
-          print(_itemOrder!.isAtc);
-          print(_itemDms![0].product!.price);
         });
+        priceTotal().then((myValue) => pOutput(myValue));
+        qtyTotal().then((value) => myOut(value));
+        if (dataT["data"]["dmsOrder"]["orderSapNumber"] == null) {
+          setState(() {
+            noAtc = true;
+          });
+        }
       } else if (dataT["responseCode" == 401]) {
         Provider.of<OrderBloc>(context, listen: false).isLoading = false;
         toast("Unauthorized Request");
@@ -602,9 +712,9 @@ class _OrderDetailsState extends State<OrderDetails> {
         toast("Not Found");
       } else {
         setState(() {
-          //_getorderdetails = GetDmsOrderDetails.fromJson(dataT);
+          Provider.of<OrderBloc>(context, listen: false).isLoading = false;
+          toast(dataT["message"]);
         });
-        //toast(_getorderdetails!.message);
       }
     }
   }

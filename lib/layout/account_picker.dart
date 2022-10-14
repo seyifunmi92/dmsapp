@@ -52,17 +52,17 @@ class _AccountPickerState extends State<AccountPicker> {
           ),
           accountList.isEmpty ? LoadingIndicatorWidget() : Container(),
           ...accountList.map(
-                  (e) => AccountCustom(e.friendlyName ?? "Distributor Name", e.sapAccountId!.toInt()))
+                  (e) => AccountCustom(e.accountType!.name ?? "Distributor", e.sapAccountId!.toInt(), e.countryCode!, e.companyCode!))
         ],
       )),
     );
   }
 
-  Widget AccountCustom(String? name, int? code) {
+  Widget AccountCustom(String? name, int? code, String countryCode, String companyCode) {
     return InkWell(
       onTap: () {
         Provider.of<CartBloc>(context, listen: false)
-            .notifyAccount(name!, code!);
+            .notifyAccount(name!, code!, countryCode, companyCode);
         Navigator.pop(context);
 
       },
@@ -99,7 +99,7 @@ class _AccountPickerState extends State<AccountPicker> {
     final CartBloc cb = context.read<CartBloc>();
     await cb.getAccountlist();
     accountList = await cb.accountList;
-    Timer(Duration(seconds: 3), () => setState(() {}) );
+    Timer(Duration(seconds: 1), () => setState(() {}) );
 
 
   }

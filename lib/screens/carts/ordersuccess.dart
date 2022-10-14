@@ -17,6 +17,7 @@ import 'package:dms/screens/products/productDetails.dart';
 import 'package:dms/splashscreen/splashscreen.dart';
 import 'package:dms/screens/support/new_support_request.dart';
 import 'package:dms/utils/colors.dart';
+import 'package:dms/utils/next_screen.dart';
 import 'package:dms/utils/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -97,8 +98,7 @@ class _OrderPlacedSuccessState extends State<OrderPlacedSuccess> {
             SizedBox(height: _height * .2),
             InkWell(
               onTap: () {
-                Navigator.push(
-                    context, MaterialPageRoute(builder: (context) => Carts()));
+                nextScreenReplace(context, DashBoard());
               },
               child: Container(
                 width: _width * .85,

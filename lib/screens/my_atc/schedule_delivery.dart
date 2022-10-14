@@ -6,18 +6,44 @@ import 'package:dms/utils/colors.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class ScheduleDelivery extends StatefulWidget {
-  const ScheduleDelivery({Key? key}) : super(key: key);
+  int distributorsapid;
+  String ordersapno;
+  String deliverycity;
+  String deliverystatecode;
+  String countrycode;
+  String deliveryType;
+  String truckSize;
+  String deliveryAddress;
+  ScheduleDelivery(
+      this.distributorsapid,
+      this.ordersapno,
+      this.deliverycity,
+      this.deliverystatecode,
+      this.countrycode,
+      this.deliveryType,
+      this.truckSize,
+      this.deliveryAddress);
 
   @override
   State<ScheduleDelivery> createState() => _ScheduleDeliveryState();
 }
 
 class _ScheduleDeliveryState extends State<ScheduleDelivery> {
+//String selectedDate = (${selectedDeliveryDate.day}-${selectedDeliveryDate.month}-${selectedDeliveryDate.year});
+  bool activeButton = false;
+  bool isLoading = false;
+  String date = "";
+  DateTime selectedDeliveryDate = DateTime.now();
+  bool isSelectDate = false;
   var formKey = GlobalKey<FormState>();
   var deliveryDateCont = TextEditingController();
   var deliveryDateNode = FocusNode();
   var deliveryAddressCont = TextEditingController();
   var deliveryAddressNode = FocusNode();
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,9 +99,12 @@ class _ScheduleDeliveryState extends State<ScheduleDelivery> {
                       onTap: () {},
                       child: Container(
                         decoration: BoxDecoration(
-                            color: inputBackgroundColor,
+                            color: isSelectDate
+                                ? Colors.white
+                                : Colors.blueGrey[50],
                             border: Border.all(
-                                color: inputBorderColor,
+                                color:
+                                    isSelectDate ? appColorAccent : Colors.grey,
                                 width: 1,
                                 style: BorderStyle.solid)),
                         height: _screenHeight * .0592,
@@ -86,19 +115,35 @@ class _ScheduleDeliveryState extends State<ScheduleDelivery> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              "Delivery Date",
-                              style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.w400,
-                                  color: iconColorSecondary,
-                                  //fontFamily: fontRegular,
-                                  fontSize: _screenHeight * .0166),
-                              textAlign: TextAlign.start,
-                            ),
-                            Icon(
-                              Icons.calendar_month,
-                              color: iconColorSecondary,
-                              size: _screenHeight * .026,
+                            isSelectDate
+                                ? Text(
+                                    "${selectedDeliveryDate.day}-${selectedDeliveryDate.month}-${selectedDeliveryDate.year}",
+                                    style: GoogleFonts.actor(
+                                        fontWeight: FontWeight.w500,
+                                        color: appColorPrimary,
+                                        letterSpacing: 1.0,
+                                        fontSize: _screenHeight * .017),
+                                    textAlign: TextAlign.start,
+                                  )
+                                : Text(
+                                    "Delivery Date",
+                                    style: GoogleFonts.poppins(
+                                        fontWeight: FontWeight.w400,
+                                        color: iconColorSecondary,
+                                        fontSize: _screenHeight * .0166),
+                                    textAlign: TextAlign.start,
+                                  ),
+                            InkWell(
+                              onTap: () {
+                                _selectDeliveryDate(context);
+                              },
+                              child: Icon(
+                                Icons.calendar_month,
+                                color: isSelectDate
+                                    ? appColorPrimary
+                                    : iconColorSecondary,
+                                size: _screenHeight * .026,
+                              ),
                             ),
                           ],
                         ),
@@ -112,18 +157,30 @@ class _ScheduleDeliveryState extends State<ScheduleDelivery> {
                         //mypadr,
                         InkWell(
                           onTap: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        ATCOrderComfirmation()));
+                            isSelectDate
+                                ? Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            ATCOrderComfirmation(
+                                                widget.distributorsapid,
+                                                widget.ordersapno,
+                                                widget.deliverycity,
+                                                widget.deliverystatecode,
+                                                widget.countrycode,
+                                                widget.deliveryType,
+                                                widget.truckSize,
+                                                widget.deliveryAddress,
+                                                selectedDeliveryDate)))
+                                : null;
                           },
                           child: Container(
                             width: _screenWidth * .86,
                             height: _screenHeight * .0633,
                             decoration: BoxDecoration(
                               //border: Border.all(color: Color(0xffB1BBC6)),
-                              color: appColorPrimary,
+                              color:
+                                  isSelectDate ? appColorPrimary : Colors.grey,
                             ),
                             child: Center(
                                 child: Text(
@@ -328,5 +385,19 @@ class _ScheduleDeliveryState extends State<ScheduleDelivery> {
         ),
       ),
     );
+  }
+
+  void _selectDeliveryDate(BuildContext context) async {
+    final DateTime? selected = await showDatePicker(
+      context: context,
+      initialDate: selectedDeliveryDate,
+      firstDate: DateTime(2010),
+      lastDate: DateTime(2035),
+    );
+    if (selected != null && selected != selectedDeliveryDate)
+      setState(() {
+        isSelectDate = true;
+        selectedDeliveryDate = selected;
+      });
   }
 }
